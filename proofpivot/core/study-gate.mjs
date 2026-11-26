@@ -1,4 +1,5 @@
 // The runtime may inspect a frozen candidate before enrollment is authorized.
+export function closedReader(html){return html.replace(/<body\b[^>]*>/,'$&<aside class="reader-main" role="status"><strong>Enrollment is CLOSED.</strong><p>This is a preflight or closed reading surface. Explicit editor approval and enrollment opening are required before study participation. No participant identity has been created.</p><a href="/sandbox">Try your own revision outside the study</a></aside>').replace('id="begin"','id="begin" disabled aria-disabled="true"');}
 export function productionAuthorized(run,frozen){
  return run?.environment==='Production'&&run.environment_id===116183&&run.project_id===53981&&run.feature_id===304953&&run.variant_id===36968&&run.experiment_id===578&&run.candidate_hash===frozen.candidate_hash&&run.preflight_only!==true&&run.production_gate_verified===true&&run.mode==='ab'&&run.protocol_status==='FROZEN'&&Number.isFinite(Date.parse(run.human_editor_approved_at))&&run.human_editor_approval_candidate_hash===frozen.candidate_hash;
 }

@@ -8,7 +8,7 @@ import {Provider,drain}from'./core/provider.mjs';
 import {readout,canonicalRead}from'./core/readout.mjs';
 import {serveSandbox}from'./core/sandbox-route.mjs';
 import frozen from '../study-freeze.json';
-import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest}from'./core/study-gate.mjs';
+import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest,closedReader}from'./core/study-gate.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -34,7 +34,7 @@ export async function handleRequest(request,env,ctx){
   const lockedProduction=env.PP_ENVIRONMENT==='Production'&&!productionAuthorized(earlyRun,frozen);
   if(scopeMatch&&!scopeMatch[2]&&request.method==='GET'){
    if(lockedProduction||!enrollmentOpen(earlyRun,env.PP_ENVIRONMENT,env.PP_ENROLLMENT,frozen)){
-    const gated=assets['reader.html'].replace('<body>','<body><aside class="data-notice" role="status"><strong>Enrollment is CLOSED.</strong><p>This is a preflight or closed reading surface. Explicit editor approval and enrollment opening are required before study participation. No participant identity has been created.</p><a href="/sandbox">Try your own revision outside the study</a></aside>').replace('id="begin"','id="begin" disabled aria-disabled="true"');
+    const gated=closedReader(assets['reader.html']);
     return new Response(gated,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});
    }
    // Cookie is scoped to this independent reader, with no script access.
