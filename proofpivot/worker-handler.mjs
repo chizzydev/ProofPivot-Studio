@@ -5,7 +5,7 @@ import {hash,experience}from'./core/payload.mjs';
 import {PROTOCOL,protocolHash}from'./core/protocol.mjs';
 import {AsyncLedger}from'./core/async-ledger.mjs';
 import {Provider,drain}from'./core/provider.mjs';
-import {readout}from'./core/readout.mjs';
+import {readout,canonicalRead}from'./core/readout.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -42,6 +42,11 @@ export async function handleRequest(request,env,ctx){
   }
   if(path.startsWith('/operator/')&&request.method==='POST'){
    if(!authorized(request,env.PP_OPERATOR_SECRET))return json({error:'Operator authentication required'},403);
+   if(path==='/operator/close-enrollment'){
+    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();
+    const windows=await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND p.exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,Date.now()-PROTOCOL.response_window_ms).first();
+    return json({closed:true,open_response_windows:windows.n,ledger:await ledger.summary()});
+   }
    if(path==='/operator/drain'){await pump(ledger,provider);return json(await ledger.summary());}
    if(path==='/operator/evidence'){
     const input=await request.json();
@@ -60,12 +65,19 @@ export async function handleRequest(request,env,ctx){
    if(limit.count>40)return json({error:'Please wait a moment before retrying'},429);
    const action=scopeMatch[2];
    if(action==='api/consent'){
-    if(env.PP_ENROLLMENT!=='open')return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
-    await ledger.consent(id);const flag=await provider.evaluate(id);if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');const p=await ledger.assign(id,flag);await ledger.render(id);
+    const flag=await provider.evaluate(id),snapshot=await readEvidence();
+    if(canonicalRead(snapshot,run,flag))return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:run.experiment_id,mode:'canonical',environment,study_complete:true});
+    const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
+    if(env.PP_ENROLLMENT!=='open'||control)return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
+    if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');await ledger.consent(id);const p=await ledger.assign(id,flag);await ledger.render(id);
     return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options.map(o=>o.label),exposure_dwell_ms:PROTOCOL.exposure_dwell_ms}});
    }
-   if(action==='api/exposure'){const result=await ledger.expose(id,input);ctx.waitUntil(pump(ledger,provider));return json(result);}
+   if(action==='api/exposure'){
+    const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
+    if(control&&!(await ledger.participant(id))?.exposed_at)return json({error:'Enrollment is closed'},409);
+    const result=await ledger.expose(id,input);ctx.waitUntil(pump(ledger,provider));return json(result);
+   }
    if(action==='api/answer'){const result=await ledger.answer(id,input.option,input.payloadHash);ctx.waitUntil(pump(ledger,provider));return json(result);}
    if(action==='api/reevaluate'){
     if(!(await ledger.participant(id))?.variant)throw Error('Prior assignment required');

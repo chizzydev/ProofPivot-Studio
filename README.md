@@ -2,6 +2,8 @@
 
 **Same facts. Two explanations. One earns the page.**
 
+[Live app](https://proofpivot-correction-fork.ochresnow128.chatgpt.site) · [Judge Door](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/judge) · [Source](https://github.com/chizzydev/ProofPivot-Studio)
+
 Deployable Sites server with a D1-backed first-answer ledger and durable outbox. Both `/read` and `/judge` use one handler, canonical facts, provider evaluation, meaningful exposure and server scoring. `proofpivot/core` and reader assets are synchronized from the canonical workspace; `source-sync.json` records hashes.
 
 Node 24+. Use the Sites dependency and build helpers. D1 migrations: `drizzle/`. Runtime secrets: `FLAGSMITH_ENVIRONMENT_KEY`, `PP_SESSION_SECRET`, `PP_OPERATOR_SECRET`. Configuration: `PP_ENVIRONMENT`, `PP_RUN`, `PP_ENROLLMENT`. Never commit secret values.

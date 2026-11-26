@@ -15,6 +15,13 @@
       "when": 1795681101919,
       "tag": "0001_huge_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795681941436,
+      "tag": "0002_sticky_jack_flag",
+      "breakpoints": true
     }
   ]
 }

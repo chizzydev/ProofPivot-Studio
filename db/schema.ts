@@ -6,3 +6,4 @@ export const outbox=sqliteTable('outbox',{id:text('id').primaryKey(),run:text('r
 export const deliveries=sqliteTable('deliveries',{id:integer('id').primaryKey({autoIncrement:true}),outbox_id:text('outbox_id').notNull(),at:integer('at').notNull(),status:text('status').notNull(),detail:text('detail')});
 export const evidence=sqliteTable('operator_evidence',{id:integer('id').primaryKey({autoIncrement:true}),run:text('run').notNull(),received_at:integer('received_at').notNull(),payload:text('payload').notNull(),sha256:text('sha256').notNull()});
 export const requestLimits=sqliteTable('request_limits',{bucket:text('bucket').primaryKey(),count:integer('count').notNull()});
+export const runControls=sqliteTable('run_controls',{run:text('run').primaryKey(),enrollment_closed_at:integer('enrollment_closed_at').notNull()});

@@ -1,4 +1,10 @@
 export function binomialSrm(a,b){const n=a+b;if(!n)return null;let c=1n,total=0n;for(let k=0;k<=n;k++){if(Math.abs(2*k-n)>=Math.abs(a-b))total+=c;if(k<n)c=c*BigInt(n-k)/BigInt(k+1);}return Number(total)/Number(2n**BigInt(n));}
+export function canonicalRead(snapshot,run,flag){
+ const e=snapshot?.experiment;
+ if(e?.id!==run.experiment_id||e.feature?.id!==run.feature_id||e.status!=='completed'||flag.experiment?.inExperiment||!flag.enabled)return false;
+ const expected=e.rollout_decision==='control'?'correction_note':e.rollout_decision==='variant'&&e.rollout_variant===run.variant_id?'evidence_time_machine':null;
+ return !!expected&&flag.value===expected;
+}
 export function readout(snapshot,ledger){
  const r=snapshot?.results?.results,metrics=r?.payload?.metrics||[];
  const definitions=snapshot?.experiment?.metrics||[];

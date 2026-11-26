@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-26T08:21:49.237Z",
+  "at": "2026-11-26T08:32:22.690Z",
   "source": "Canonical ../app/lib and ../app/public",
   "hashes": {
     "engine.mjs": "dad2508d530eeda58f8b8e14049b17b0137bd6b3afdbf5cd8fa4fff2f18d781c",
@@ -8,7 +8,7 @@
     "contract.mjs": "b482b02d0c910eba3e3bb58148acd1bd33d488da72d5f25c2dc125cfeaf8720b",
     "provider.mjs": "df49a16188fad7a291778074966091a7daca0ab0ae6171f46135c83cdd9e5a30",
     "async-ledger.mjs": "0e8ef227f6cbe590eeaacf8954cf4f5735b5c776c751e349afbcc6020d2ec219",
-    "readout.mjs": "2151ce18dcc9a421930f734616ce9b7ab1ccc6aea45ecf8ebdbff84b69a65874",
+    "readout.mjs": "49252719575baddc9cfee987638eb8f247ea3b9d461ae130d7d3240bd2047965",
     "ledger.mjs": "b0b5d39f8244598c57811edd056d963e488f7651f2c51a6f185a928f709924ee"
   },
   "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8"
