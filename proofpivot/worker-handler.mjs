@@ -56,12 +56,14 @@ export async function handleRequest(request,env,ctx){
    const raw=(request.headers.get('Cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('pp_session='))?.slice(11)||'';
    const[id,sig]=raw.split('.');const expected=createHmac('sha256',env.PP_SESSION_SECRET).update(id||'').digest('hex');
    if(!/^pp:[0-9a-f-]{36}$/.test(id||'')||!/^[0-9a-f]{64}$/.test(sig||'')||!timingSafeEqual(Buffer.from(sig,'hex'),Buffer.from(expected,'hex')))return json({error:'Open the reader page to start a session'},403);
+   const limit=await env.DB.prepare('INSERT INTO request_limits(bucket,count) VALUES(?,1) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(`${run.run}:${id}:${Math.floor(Date.now()/60000)}`).first();
+   if(limit.count>40)return json({error:'Please wait a moment before retrying'},429);
    const action=scopeMatch[2];
    if(action==='api/consent'){
     if(env.PP_ENROLLMENT!=='open')return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
     await ledger.consent(id);const flag=await provider.evaluate(id);if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');const p=await ledger.assign(id,flag);await ledger.render(id);
-    return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options,exposure_dwell_ms:PROTOCOL.exposure_dwell_ms}});
+    return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options.map(o=>o.label),exposure_dwell_ms:PROTOCOL.exposure_dwell_ms}});
    }
    if(action==='api/exposure'){const result=await ledger.expose(id,input);ctx.waitUntil(pump(ledger,provider));return json(result);}
    if(action==='api/answer'){const result=await ledger.answer(id,input.option,input.payloadHash);ctx.waitUntil(pump(ledger,provider));return json(result);}

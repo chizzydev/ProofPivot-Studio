@@ -1,0 +1,57 @@
+{
+  "id": "ons-original",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpfirstquarterlyestimateuk/januarytomarch2026/previous/v1",
+  "released_at": "2026-05-14",
+  "retrieved_at": "2026-11-26T02:44:41.285Z",
+  "sha256": "69c255480b73af76f036bb964020949fdcbb5fdb1bfcef90594e6d94072c8771",
+  "rights": "Office for National Statistics; Open Government Licence, verify attribution at source",
+  "literal_unit_note": "Data are in £ millions unless labelled otherwise.",
+  "semantic_limit": "Compare the same published Table 3 column in £ millions. Do not interpret this replay as a real/nominal basis adjudication.",
+  "observations": {
+    "gos-Q1-2025": {
+      "value": "161724",
+      "unit": "GBP_million",
+      "basis": "Table 3 as published; no real/nominal inference",
+      "period": "Q1 2025",
+      "source_span": [
+        "Q1 2025",
+        "159463",
+        "-2261",
+        "161724",
+        "-0.3"
+      ]
+    },
+    "gos-Q2-2025": {
+      "value": "165011",
+      "unit": "GBP_million",
+      "basis": "Table 3 as published; no real/nominal inference",
+      "period": "Q2 2025",
+      "source_span": [
+        "Q2 2025",
+        "167750",
+        "2739",
+        "165011",
+        "2.0"
+      ]
+    },
+    "gos-Q1-2026": {
+      "value": "169067",
+      "unit": "GBP_million",
+      "basis": "Table 3 as published; no real/nominal inference",
+      "period": "Q1 2026",
+      "source_span": [
+        "Q1 2026",
+        "169205",
+        "138",
+        "169067",
+        "1.1"
+      ]
+    },
+    "real-gdp-q1-2026": {
+      "value": "0.6",
+      "unit": "percent",
+      "basis": "real GDP, quarter on previous quarter, seasonally adjusted",
+      "period": "Q1 2026"
+    }
+  }
+}

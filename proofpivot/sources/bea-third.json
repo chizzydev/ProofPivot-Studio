@@ -1,0 +1,16 @@
+{
+  "id": "bea-third",
+  "url": "https://www.bea.gov/news/2026/gdp-third-estimate-industries-corporate-profits-state-gdp-and-state-personal-income-2nd",
+  "released_at": "2026-09-30",
+  "retrieved_at": "2026-11-26T02:56:09.033Z",
+  "sha256": "627ab21344cc63bd0be186dd808ce95934d4a2869b071b34db93b36bdc0eee2d",
+  "source_span": "Real gross domestic product (GDP) increased at an annual rate of 2.2 percent in the second quarter of 2026 (April, May, and June), according to the third estimate released today by the U.",
+  "observations": {
+    "growth": {
+      "value": "2.2",
+      "unit": "percent",
+      "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+      "period": "Q2 2026"
+    }
+  }
+}

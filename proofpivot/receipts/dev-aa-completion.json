@@ -1,0 +1,108 @@
+{
+  "at": "2026-11-26T03:08:25.837Z",
+  "environment": "Development",
+  "run": {
+    "run": "dev-aa-v1",
+    "mode": "aa",
+    "environment": "Development",
+    "experiment_id": 519,
+    "feature_id": 304953,
+    "variant_id": 36968,
+    "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+    "protocol_hash": "d500ed64f3de55f9bb343d7c8a505ae53233995c5b67c7292ca626eabe4a9083"
+  },
+  "classification": "CALIBRATION_COMPLETION_NOT_HUMAN_STUDY_ROLLOUT",
+  "request": {
+    "rollout_decision": "control"
+  },
+  "response": {
+    "id": 519,
+    "feature": {
+      "id": 304953,
+      "name": "proofpivot_correction_experience",
+      "type": "MULTIVARIATE",
+      "initial_value": "correction_note",
+      "multivariate_options": [
+        {
+          "id": 36968,
+          "uuid": "5a8d9772-9ab8-4d95-bb36-defda67f9f52",
+          "type": "unicode",
+          "integer_value": null,
+          "string_value": "evidence_time_machine",
+          "boolean_value": null,
+          "default_percentage_allocation": 0,
+          "key": "evidence_time_machine"
+        }
+      ]
+    },
+    "name": "ProofPivot Correction Fork - Development AA v1",
+    "hypothesis": "Identical Correction Notes should reveal assignment and event noise, not a manufactured cognitive winner.",
+    "status": "completed",
+    "metrics": [
+      {
+        "id": 559,
+        "metric": 504,
+        "metric_name": "ProofPivot Revision Check Correct",
+        "aggregation": "occurrence",
+        "direction": "up",
+        "expected_direction": "increase",
+        "created_at": "2026-11-26T02:48:16.235359Z"
+      },
+      {
+        "id": 560,
+        "metric": 505,
+        "metric_name": "ProofPivot Revision Check Submitted",
+        "aggregation": "occurrence",
+        "direction": "up",
+        "expected_direction": "not_decrease",
+        "created_at": "2026-11-26T02:48:16.235377Z"
+      }
+    ],
+    "created_at": "2026-11-26T02:48:16.233163Z",
+    "updated_at": "2026-11-26T03:08:24.713141Z",
+    "started_at": "2026-11-26T02:48:17.519170Z",
+    "ended_at": "2026-11-26T03:08:24.525761Z",
+    "rollout_decision": "control",
+    "rollout_variant": null
+  },
+  "sessions": [
+    {
+      "identity_sha256": "0e9794a76e801d68c3ab6b428928e64e46a7b239e3a0dfd6e08a36a917eeeda3",
+      "before": {
+        "enabled": true,
+        "value": "correction_note",
+        "variant": "control",
+        "experiment": {
+          "id": 519,
+          "name": "ProofPivot Correction Fork - Development AA v1",
+          "inExperiment": true
+        }
+      },
+      "after": {
+        "enabled": true,
+        "value": "correction_note",
+        "variant": "control"
+      }
+    },
+    {
+      "identity_sha256": "d25c020c82e7279dcaf878758297be1cfe9cfc0e3eb665ab4f935ab241804833",
+      "before": {
+        "enabled": true,
+        "value": "evidence_time_machine",
+        "variant": "evidence_time_machine",
+        "experiment": {
+          "id": 519,
+          "name": "ProofPivot Correction Fork - Development AA v1",
+          "inExperiment": true
+        }
+      },
+      "after": {
+        "enabled": true,
+        "value": "correction_note",
+        "variant": "control"
+      }
+    }
+  ],
+  "status": "DEV_COMPLETION_ROLLOUT_PROVEN",
+  "interpretation": "Identical A/A is inconclusive. Retain control. No cognitive winner."
+}

@@ -1,0 +1,16 @@
+{
+  "id": "bea-advance",
+  "url": "https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026",
+  "released_at": "2026-07-30",
+  "retrieved_at": "2026-11-26T02:56:07.096Z",
+  "sha256": "3e79704eb657e96ff67edacbf6db6d319549653dd90eafcc0055288473859cea",
+  "source_span": "Real gross domestic product (GDP) increased at an annual rate of 1.5 percent in the second quarter of 2026 (April, May, and June), according to the advance estimate released today by the U.",
+  "observations": {
+    "growth": {
+      "value": "1.5",
+      "unit": "percent",
+      "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+      "period": "Q2 2026"
+    }
+  }
+}

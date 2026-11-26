@@ -1,0 +1,67 @@
+{
+  "at": "2026-11-26T02:58:07.384Z",
+  "worker_paused": true,
+  "ledger": {
+    "run": "dev-aa-v1",
+    "environment": "Development",
+    "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+    "participants": [
+      {
+        "variant": "control",
+        "assigned": 69,
+        "exposed": 69,
+        "quarantined": 0
+      },
+      {
+        "variant": "evidence_time_machine",
+        "assigned": 64,
+        "exposed": 64,
+        "quarantined": 0
+      }
+    ],
+    "answers": [
+      {
+        "variant": "control",
+        "submitted": 69,
+        "correct": 33
+      },
+      {
+        "variant": "evidence_time_machine",
+        "submitted": 64,
+        "correct": 33
+      }
+    ],
+    "outbox": [
+      {
+        "event": "$flag_exposure",
+        "status": "HTTP_ACCEPTED",
+        "count": 131
+      },
+      {
+        "event": "$flag_exposure",
+        "status": "PENDING",
+        "count": 2
+      },
+      {
+        "event": "proofpivot_revision_check_correct",
+        "status": "HTTP_ACCEPTED",
+        "count": 65
+      },
+      {
+        "event": "proofpivot_revision_check_correct",
+        "status": "PENDING",
+        "count": 1
+      },
+      {
+        "event": "proofpivot_revision_check_submitted",
+        "status": "HTTP_ACCEPTED",
+        "count": 131
+      },
+      {
+        "event": "proofpivot_revision_check_submitted",
+        "status": "PENDING",
+        "count": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "at": "2026-11-26T02:56:09.042Z",
+  "source_values": [
+    "1.5",
+    "1.5",
+    "2.2"
+  ],
+  "sources": [
+    {
+      "id": "bea-advance",
+      "url": "https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026",
+      "released_at": "2026-07-30",
+      "retrieved_at": "2026-11-26T02:56:07.096Z",
+      "sha256": "3e79704eb657e96ff67edacbf6db6d319549653dd90eafcc0055288473859cea",
+      "source_span": "Real gross domestic product (GDP) increased at an annual rate of 1.5 percent in the second quarter of 2026 (April, May, and June), according to the advance estimate released today by the U.",
+      "observations": {
+        "growth": {
+          "value": "1.5",
+          "unit": "percent",
+          "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+          "period": "Q2 2026"
+        }
+      }
+    },
+    {
+      "id": "bea-second",
+      "url": "https://www.bea.gov/news/2026/gdp-second-estimate-and-corporate-profits-2nd-quarter-2026",
+      "released_at": "2026-08-26",
+      "retrieved_at": "2026-11-26T02:56:08.533Z",
+      "sha256": "cea58a48720caca76d183f95cc4ad5c47b3d4c69e8742b7b5f0afe9167d8ce44",
+      "source_span": "Real gross domestic product (GDP) increased at an annual rate of 1.5 percent in the second quarter of 2026 (April, May, and June), according to the second estimate released today by the U.",
+      "observations": {
+        "growth": {
+          "value": "1.5",
+          "unit": "percent",
+          "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+          "period": "Q2 2026"
+        }
+      }
+    },
+    {
+      "id": "bea-third",
+      "url": "https://www.bea.gov/news/2026/gdp-third-estimate-industries-corporate-profits-state-gdp-and-state-personal-income-2nd",
+      "released_at": "2026-09-30",
+      "retrieved_at": "2026-11-26T02:56:09.033Z",
+      "sha256": "627ab21344cc63bd0be186dd808ce95934d4a2869b071b34db93b36bdc0eee2d",
+      "source_span": "Real gross domestic product (GDP) increased at an annual rate of 2.2 percent in the second quarter of 2026 (April, May, and June), according to the third estimate released today by the U.",
+      "observations": {
+        "growth": {
+          "value": "2.2",
+          "unit": "percent",
+          "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+          "period": "Q2 2026"
+        }
+      }
+    }
+  ],
+  "transitions": [
+    [
+      {
+        "id": "current-growth",
+        "expression": {
+          "op": "observation",
+          "ref": "growth"
+        },
+        "precision": 1,
+        "dependencies": [
+          "growth"
+        ],
+        "unit": "percent",
+        "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+        "original_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "current_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "original_display": "1.5",
+        "current_display": "1.5",
+        "state": "unaffected",
+        "supported_release": "bea-second"
+      },
+      {
+        "id": "historical-growth",
+        "expression": {
+          "op": "observation",
+          "ref": "growth"
+        },
+        "precision": 1,
+        "temporality": "historical",
+        "dependencies": [
+          "growth"
+        ],
+        "unit": "percent",
+        "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+        "original_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "current_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "original_display": "1.5",
+        "current_display": "1.5",
+        "state": "historical",
+        "supported_release": "bea-advance"
+      }
+    ],
+    [
+      {
+        "id": "current-growth",
+        "expression": {
+          "op": "observation",
+          "ref": "growth"
+        },
+        "precision": 1,
+        "dependencies": [
+          "growth"
+        ],
+        "unit": "percent",
+        "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+        "original_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "current_value": {
+          "numerator": "22",
+          "denominator": "10"
+        },
+        "original_display": "1.5",
+        "current_display": "2.2",
+        "state": "changed",
+        "supported_release": "bea-third"
+      },
+      {
+        "id": "historical-growth",
+        "expression": {
+          "op": "observation",
+          "ref": "growth"
+        },
+        "precision": 1,
+        "temporality": "historical",
+        "dependencies": [
+          "growth"
+        ],
+        "unit": "percent",
+        "basis": "US real GDP, annualized quarter-on-quarter, seasonally adjusted",
+        "original_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "current_value": {
+          "numerator": "15",
+          "denominator": "10"
+        },
+        "original_display": "1.5",
+        "current_display": "1.5",
+        "state": "historical",
+        "supported_release": "bea-second"
+      }
+    ]
+  ],
+  "same_engine": "app/lib/engine.mjs revise()",
+  "not_a_second_experiment": true
+}

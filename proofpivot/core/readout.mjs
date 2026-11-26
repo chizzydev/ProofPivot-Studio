@@ -17,6 +17,12 @@ export function readout(snapshot,ledger){
  if(result.discrepancies.length){result.status='DO_NOT_ACT';return result;}
  const arms=Object.values(primary.variants||{});if(arms.length!==2||arms.some(a=>a.n<50||a.sum<5))return result;
  const ci=primary.inference?.evidence_time_machine;result.interval=ci?[ci.ci_low,ci.ci_high]:null;result.chance_to_win=ci?.chance_to_win??null;result.relative_lift=ci?.lift??null;
+ const gc=guardrail?.inference?.evidence_time_machine,control=guardrail?.variants?.control;
+ const base=control?.n?control.sum/control.n:null;
+ result.guardrail_interval_pp=gc&&base!==null?[100*base*gc.ci_low,100*base*gc.ci_high]:null;
+ result.guardrail_healthy=!!result.guardrail_interval_pp&&result.guardrail_interval_pp[0]>-5;
  result.status=!ci?'COLLECTING_DATA':ci.ci_low<=0&&ci.ci_high>=0?'INCONCLUSIVE':'HUMAN_REVIEW_REQUIRED';
+ if(ci?.ci_low>0&&!result.guardrail_healthy)result.status='DO_NOT_ACT';
+ if(result.guardrail_interval_pp?.[1]<-5)result.status='DO_NOT_ACT';
  return result;
 }
