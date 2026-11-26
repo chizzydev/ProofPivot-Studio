@@ -3,6 +3,7 @@ import {FLAG} from './contract.mjs';
 export class Provider {
  constructor(environmentKey){this.key=environmentKey;this.sdk=new Flagsmith({environmentKey,enableLocalEvaluation:false,enableEvents:false,requestTimeoutSeconds:8});}
  async evaluate(identity){const flags=await this.sdk.getIdentityFlags(identity);const f=flags.getFlag(FLAG);return {enabled:f.enabled,value:f.value,variant:f.variant,experiment:f.experiment};}
+ async evaluateEnvironment(){const flags=await this.sdk.getEnvironmentFlags();const f=flags.getFlag(FLAG);return {enabled:f.enabled,value:f.value,variant:f.variant??null,experiment:f.experiment??null};}
  async send(row,environment){
   if(environment==='Production'&&(row.identity.startsWith('qa:')||row.identity.startsWith('dev:')))throw Error('Synthetic Production study traffic prohibited');
   const outcomes=[];

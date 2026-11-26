@@ -7,6 +7,8 @@ import {AsyncLedger}from'./core/async-ledger.mjs';
 import {Provider,drain}from'./core/provider.mjs';
 import {readout,canonicalRead}from'./core/readout.mjs';
 import {serveSandbox}from'./core/sandbox-route.mjs';
+import frozen from '../study-freeze.json';
+import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest}from'./core/study-gate.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -28,7 +30,13 @@ export async function handleRequest(request,env,ctx){
    return new Response(content,{headers:{...headers,'Content-Type':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'}});
   }
   const scopeMatch=path.match(/^(\/read(?:\/(?:left|right))?)(?:\/(api\/.*))?\/?$/);
+  const earlyRun=env.PP_RUN?JSON.parse(env.PP_RUN):null;
+  const lockedProduction=env.PP_ENVIRONMENT==='Production'&&!productionAuthorized(earlyRun,frozen);
   if(scopeMatch&&!scopeMatch[2]&&request.method==='GET'){
+   if(lockedProduction||!enrollmentOpen(earlyRun,env.PP_ENVIRONMENT,env.PP_ENROLLMENT,frozen)){
+    const gated=assets['reader.html'].replace('<body>','<body><aside class="data-notice" role="status"><strong>Enrollment is CLOSED.</strong><p>This is a preflight or closed reading surface. Explicit editor approval and enrollment opening are required before study participation. No participant identity has been created.</p><a href="/sandbox">Try your own revision outside the study</a></aside>').replace('id="begin"','id="begin" disabled aria-disabled="true"');
+    return new Response(gated,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});
+   }
    // Cookie is scoped to this independent reader, with no script access.
    if(!env.PP_SESSION_SECRET)return json({error:'Experiment is being prepared. Please return later.'},503);
    const sign=id=>createHmac('sha256',env.PP_SESSION_SECRET).update(id).digest('hex');
@@ -39,10 +47,24 @@ export async function handleRequest(request,env,ctx){
   if(!env.DB||!env.PP_RUN||!env.FLAGSMITH_ENVIRONMENT_KEY||!env.PP_SESSION_SECRET)return json({error:'Experiment is being prepared. No participant is enrolled.'},503);
   const run=JSON.parse(env.PP_RUN),environment=env.PP_ENVIRONMENT;
   if(!['Development','Production'].includes(environment)||run.environment!==environment||run.payload_hash!==hash(facts)||run.protocol_hash!==protocolHash)throw Error('Frozen contract mismatch');
-  if(environment==='Production'&&(!run.production_gate_verified||!run.human_editor_approved_at||run.mode!=='ab'||run.protocol_status!=='FROZEN'))throw Error('Production study is gated');
+  if(path==='/api/facts'&&request.method==='GET')return json({facts,correction_payload_hash:hash(facts)});
+  if(lockedProduction){
+   if(path==='/api/preflight'&&request.method==='GET'){
+    const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
+    const manifest=await frozenRuntimeManifest({run,environment,enrollment:env.PP_ENROLLMENT,facts,protocolHash,assets,frozen,hash,provider});
+    // Read only. No initialize(), study identity evaluation, outbox sender or run insert.
+    const counts={};for(const table of ['participants','answers','outbox','consents'])counts[table]=(await env.DB.prepare(`SELECT COUNT(*) n FROM ${table} WHERE run=?`).bind(run.run).first()).n;
+    return json({...manifest,ledger_counts:counts});
+   }
+   if(path==='/api/state'&&request.method==='GET'){
+    const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});
+    return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:await ledger.summary(),provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
+   }
+   if(scopeMatch?.[2]&&request.method==='POST')return json({error:'Production enrollment is CLOSED. Explicit editor approval and enrollment opening are required.'},409);
+   return json({error:'Production study is gated; preflight only.'},403);
+  }
   const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});await ledger.initialize();const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
   const readEvidence=async()=>{const r=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(run.run).first();return r?{...JSON.parse(r.payload),receipt_received_at:new Date(r.received_at).toISOString(),receipt_sha256:r.sha256}:null;};
-  if(path==='/api/facts'&&request.method==='GET')return json({facts,correction_payload_hash:hash(facts)});
   if(path==='/api/state'&&request.method==='GET'){
    ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,study_role:run.role||'development',run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
   }
@@ -73,6 +95,11 @@ export async function handleRequest(request,env,ctx){
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
     const snapshot=await readEvidence();
+    if(snapshot?.experiment?.status!=='completed'){
+     if(!enrollmentOpen(run,environment,env.PP_ENROLLMENT,frozen))return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
+     const alreadyClosed=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
+     if(alreadyClosed)return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
+    }
     if(environment==='Production'&&snapshot?.experiment?.status!=='completed'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
     const flag=await provider.evaluate(id);
     if(canonicalRead(snapshot,run,flag))return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:run.experiment_id,mode:'canonical',environment,study_complete:true});
