@@ -1,5 +1,5 @@
 {
-  "candidate_hash": "59a905df7747b4db4d644f74df7798f7602762cc0a75c5aae26d3ad8c77baedd",
+  "candidate_hash": "535157bb94091697cd44dca38cf8bddf0b1d9d40ce50c86b249c3622afffb354",
   "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
   "protocol_hash": "e1861df7440826a128b4f01cb4e40cf157b8e79a32bb705a7f016b67c795328d",
   "content_hashes": {
@@ -10,7 +10,7 @@
     "reader.html": "1bbaea94e10945665f83a8baaa3efc7adf3557d2238df3728ef8d3f2437e47e6",
     "style.css": "9c9173f8b288add4f87923455a4ed4c89f475aea07d58fffeb6c40be6dc286dc"
   },
-  "study_design_hash": "9a078eff61823c0c6642859c98e391e4ed70d8f4bdc7e06ff7dff4b53d50e33a",
+  "study_design_hash": "dc7910ed8f0a5387cd99f8d0a6e706e45f51b3ca8912c21e2c6976caca4c474f",
   "run": "prod-ons-study-v1",
   "experiment_id": 578
 }

@@ -49,14 +49,16 @@ export async function handleRequest(request,env,ctx){
   const run=JSON.parse(env.PP_RUN),environment=env.PP_ENVIRONMENT;
   if(!['Development','Production'].includes(environment)||run.environment!==environment||run.payload_hash!==hash(facts)||run.protocol_hash!==protocolHash)throw Error('Frozen contract mismatch');
   if(path==='/api/facts'&&request.method==='GET')return json({facts,correction_payload_hash:hash(facts)});
-  if(lockedProduction){
-   if(path==='/api/preflight'&&request.method==='GET'){
+  if(path==='/api/preflight'&&request.method==='GET'&&environment==='Production'){
     const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
-    const manifest=await frozenRuntimeManifest({run,environment,enrollment:env.PP_ENROLLMENT,facts,protocolHash,assets,frozen,hash,provider});
+    const phase=await new InternalPilot(env.DB,run.run).phase();
+    const admissionOpen=env.PP_ENROLLMENT==='open'&&phase==='INTERNAL_PILOT_COLLECTING';
+    const manifest=await frozenRuntimeManifest({run,environment,enrollment:admissionOpen?'open':'closed',facts,protocolHash,assets,frozen,hash,provider});
     // Read only. No initialize(), study identity evaluation, outbox sender or run insert.
     const counts={};for(const table of ['participants','answers','outbox','consents','internal_pilot_slots','internal_pilot_reviews'])counts[table]=(await env.DB.prepare(`SELECT COUNT(*) n FROM ${table} WHERE run=?`).bind(run.run).first()).n;
     return json({...manifest,ledger_counts:counts});
-   }
+  }
+  if(lockedProduction){
    if(path==='/api/state'&&request.method==='GET'){
     const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});
     return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,study_design:INTERNAL_PILOT,study_design_hash:studyDesignHash,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:await ledger.summary(),provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
@@ -98,7 +100,7 @@ export async function handleRequest(request,env,ctx){
     const windows=(await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,now-PROTOCOL.response_window_ms).first()).n;
     const recent_unexposed=(await env.DB.prepare('SELECT COUNT(*) n FROM participants WHERE run=? AND exposed_at IS NULL AND assigned_at>?').bind(run.run,now-PROTOCOL.response_window_ms).first()).n;
     const closed=!!await env.DB.prepare('SELECT run FROM run_controls WHERE run=?').bind(run.run).first();
-    return json({at:new Date(now).toISOString(),run:run.run,experiment_id:run.experiment_id,enrollment:env.PP_ENROLLMENT==='open'&&!closed&&operational.phase==='INTERNAL_PILOT_COLLECTING'?'OPEN':'CLOSED',operational,integrity:{scoring_mismatches,invalid_answer_windows,eligibility,assignments,exposure_timing,duplicate_events},open_response_windows:windows,recent_unexposed,performance_withheld:true,broader_recruitment_authorized:false});
+    return json({at:new Date(now).toISOString(),run:run.run,experiment_id:run.experiment_id,payload_hash:hash(facts),protocol_hash:protocolHash,candidate_hash:frozen.candidate_hash,study_design_hash:studyDesignHash,enrollment:env.PP_ENROLLMENT==='open'&&!closed&&operational.phase==='INTERNAL_PILOT_COLLECTING'?'OPEN':'CLOSED',operational,integrity:{scoring_mismatches,invalid_answer_windows,eligibility,assignments,exposure_timing,duplicate_events},open_response_windows:windows,recent_unexposed,performance_withheld:true,broader_recruitment_authorized:false});
    }
    if(path==='/operator/drain'){await pump(ledger,provider);return json(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'?await pilot.operational():await ledger.summary());}
    if(path==='/operator/evidence'){
@@ -146,7 +148,7 @@ export async function handleRequest(request,env,ctx){
     if(control&&!(await ledger.participant(id))?.exposed_at)return json({error:'Enrollment is closed'},409);
     const result=await ledger.expose(id,input);ctx.waitUntil(pump(ledger,provider));return json(result);
    }
-   if(action==='api/answer'){const result=await ledger.answer(id,input.option,input.payloadHash);ctx.waitUntil(pump(ledger,provider));return json(result);}
+   if(action==='api/answer'){const result=await ledger.answer(id,input.option,input.payloadHash);if(pilot)await pilot.closeIfCheckpointComplete();ctx.waitUntil(pump(ledger,provider));return json(result);}
    if(action==='api/reevaluate'){
     if(!(await ledger.participant(id))?.variant)throw Error('Prior assignment required');
     const flag=await provider.evaluate(id);if(!flag.enabled||!['correction_note','evidence_time_machine'].includes(flag.value))throw Error('Provider unavailable');return json({...experience(facts,flag.value,run.mode),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment:flag.experiment??null});
