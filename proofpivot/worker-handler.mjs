@@ -9,7 +9,7 @@ import {readout,canonicalRead}from'./core/readout.mjs';
 import {serveSandbox}from'./core/sandbox-route.mjs';
 import frozen from '../study-freeze.json';
 import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest,closedReader}from'./core/study-gate.mjs';
-import {InternalPilot,INTERNAL_PILOT,studyDesignHash}from'./core/internal-pilot.mjs';
+import {InternalPilot,INTERNAL_PILOT,studyDesignHash,canShowStudyPerformance}from'./core/internal-pilot.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -68,11 +68,12 @@ export async function handleRequest(request,env,ctx){
   }
   const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});await ledger.initialize();const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
   const pilot=environment==='Production'?new InternalPilot(env.DB,run.run):null;
+  const broaderApproved=canShowStudyPerformance(run,pilot?await pilot.phase():null,frozen);
   const readEvidence=async()=>{const r=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(run.run).first();return r?{...JSON.parse(r.payload),receipt_received_at:new Date(r.received_at).toISOString(),receipt_sha256:r.sha256}:null;};
   if(path==='/api/state'&&request.method==='GET'){
-   if(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'){
+   if(pilot&&(await pilot.phase()!=='INTERNAL_PILOT_PASS'||!broaderApproved)){
     ctx.waitUntil(pump(ledger,provider));const operational=await pilot.operational();
-    return json({state:operational.phase==='INVALIDATED'?'DO_NOT_ACT':operational.phase,environment,mode:run.mode,study_role:run.role,internal_pilot_phase:operational.phase,enrollment:operational.phase==='INTERNAL_PILOT_COLLECTING'&&env.PP_ENROLLMENT==='open'?'OPEN':'CLOSED',run:run.run,experiment_id:run.experiment_id,ledger:{run:run.run,environment,operational},provider:null,inference_valid:operational.phase!=='INVALIDATED',limitations:['Operational/protocol review only. No arm-level performance is shown. Initial participants and all provider events remain in the actual study. Material changes invalidate the entire run.']});
+    return json({state:operational.phase==='INVALIDATED'?'DO_NOT_ACT':operational.phase,environment,mode:run.mode,study_role:run.role,internal_pilot_phase:operational.phase,broader_recruitment_authorized:false,enrollment:operational.phase==='INTERNAL_PILOT_COLLECTING'&&env.PP_ENROLLMENT==='open'?'OPEN':'CLOSED',run:run.run,experiment_id:run.experiment_id,ledger:{run:run.run,environment,operational},provider:null,inference_valid:operational.phase!=='INVALIDATED',limitations:['Operational/protocol review only. No arm-level performance is shown, including after checkpoint PASS until broader approval. Initial participants and all provider events remain in the actual study. Material changes invalidate the entire run.']});
    }
    ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,study_role:run.role||'development',internal_pilot_phase:pilot?'INTERNAL_PILOT_PASS':null,run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
   }
@@ -102,10 +103,10 @@ export async function handleRequest(request,env,ctx){
     const closed=!!await env.DB.prepare('SELECT run FROM run_controls WHERE run=?').bind(run.run).first();
     return json({at:new Date(now).toISOString(),run:run.run,experiment_id:run.experiment_id,payload_hash:hash(facts),protocol_hash:protocolHash,candidate_hash:frozen.candidate_hash,study_design_hash:studyDesignHash,enrollment:env.PP_ENROLLMENT==='open'&&!closed&&operational.phase==='INTERNAL_PILOT_COLLECTING'?'OPEN':'CLOSED',operational,integrity:{scoring_mismatches,invalid_answer_windows,eligibility,assignments,exposure_timing,duplicate_events},open_response_windows:windows,recent_unexposed,performance_withheld:true,broader_recruitment_authorized:false});
    }
-   if(path==='/operator/drain'){await pump(ledger,provider);return json(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'?await pilot.operational():await ledger.summary());}
+   if(path==='/operator/drain'){await pump(ledger,provider);return json(pilot&&(await pilot.phase()!=='INTERNAL_PILOT_PASS'||!broaderApproved)?await pilot.operational():await ledger.summary());}
    if(path==='/operator/evidence'){
     const input=await request.json();
-    if(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'&&input.results?.results)return json({error:'Arm-level results are withheld during internal-pilot review'},409);
+    if(pilot&&(await pilot.phase()!=='INTERNAL_PILOT_PASS'||!broaderApproved)&&input.results?.results)return json({error:'Arm-level results are withheld until broader-study approval'},409);
     if(input.run?.run!==run.run||input.run?.experiment_id!==run.experiment_id||input.experiment?.feature?.id!==run.feature_id||input.environment_id!==(environment==='Development'?116182:116183))return json({error:'Provider snapshot contract mismatch'},409);
     await env.DB.prepare('INSERT INTO operator_evidence(run,received_at,payload,sha256) VALUES(?,?,?,?)').bind(run.run,Date.now(),JSON.stringify(input),hash(input)).run();return json({stored:true,sha256:hash(input)});
    }
@@ -123,7 +124,7 @@ export async function handleRequest(request,env,ctx){
    if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed; all records are preserved.'},409);
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
-    if(pilot&&await pilot.phase()==='INTERNAL_PILOT_PASS'&&!run.broader_recruitment_approved_at&&!(await ledger.participant(id))?.assigned_at)return json({error:'Cohort review complete. Broader recruitment requires editor approval.'},409);
+    if(pilot&&await pilot.phase()==='INTERNAL_PILOT_PASS'&&!broaderApproved&&!(await ledger.participant(id))?.assigned_at)return json({error:'Cohort review complete. Broader recruitment requires editor approval.'},409);
     const snapshot=await readEvidence();
     if(snapshot?.experiment?.status!=='completed'){
      if(!enrollmentOpen(run,environment,env.PP_ENROLLMENT,frozen))return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
