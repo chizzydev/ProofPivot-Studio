@@ -8,3 +8,5 @@ export const evidence=sqliteTable('operator_evidence',{id:integer('id').primaryK
 export const requestLimits=sqliteTable('request_limits',{bucket:text('bucket').primaryKey(),count:integer('count').notNull()});
 export const runControls=sqliteTable('run_controls',{run:text('run').primaryKey(),enrollment_closed_at:integer('enrollment_closed_at').notNull()});
 export const consents=sqliteTable('consents',{run:text('run').notNull(),identity:text('identity').notNull(),protocol_hash:text('protocol_hash').notNull(),adult_english:integer('adult_english').notNull(),first_time:integer('first_time').notNull(),at:integer('at').notNull()},t=>[primaryKey({columns:[t.run,t.identity]})]);
+export const internalPilotSlots=sqliteTable('internal_pilot_slots',{run:text('run').notNull(),identity:text('identity').notNull(),at:integer('at').notNull()},t=>[primaryKey({columns:[t.run,t.identity]})]);
+export const internalPilotReviews=sqliteTable('internal_pilot_reviews',{id:integer('id').primaryKey({autoIncrement:true}),run:text('run').notNull(),decision:text('decision').notNull(),at:integer('at').notNull(),payload:text('payload').notNull()});

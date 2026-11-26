@@ -9,6 +9,7 @@ import {readout,canonicalRead}from'./core/readout.mjs';
 import {serveSandbox}from'./core/sandbox-route.mjs';
 import frozen from '../study-freeze.json';
 import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest,closedReader}from'./core/study-gate.mjs';
+import {InternalPilot,INTERNAL_PILOT,studyDesignHash}from'./core/internal-pilot.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -33,7 +34,7 @@ export async function handleRequest(request,env,ctx){
   const earlyRun=env.PP_RUN?JSON.parse(env.PP_RUN):null;
   const lockedProduction=env.PP_ENVIRONMENT==='Production'&&!productionAuthorized(earlyRun,frozen);
   if(scopeMatch&&!scopeMatch[2]&&request.method==='GET'){
-   if(lockedProduction||!enrollmentOpen(earlyRun,env.PP_ENVIRONMENT,env.PP_ENROLLMENT,frozen)){
+   if(lockedProduction||!enrollmentOpen(earlyRun,env.PP_ENVIRONMENT,env.PP_ENROLLMENT,frozen)||env.PP_ENVIRONMENT==='Production'&&await new InternalPilot(env.DB,earlyRun.run).phase()==='INVALIDATED'){
     const gated=closedReader(assets['reader.html']);
     return new Response(gated,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});
    }
@@ -53,20 +54,25 @@ export async function handleRequest(request,env,ctx){
     const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
     const manifest=await frozenRuntimeManifest({run,environment,enrollment:env.PP_ENROLLMENT,facts,protocolHash,assets,frozen,hash,provider});
     // Read only. No initialize(), study identity evaluation, outbox sender or run insert.
-    const counts={};for(const table of ['participants','answers','outbox','consents'])counts[table]=(await env.DB.prepare(`SELECT COUNT(*) n FROM ${table} WHERE run=?`).bind(run.run).first()).n;
+    const counts={};for(const table of ['participants','answers','outbox','consents','internal_pilot_slots','internal_pilot_reviews'])counts[table]=(await env.DB.prepare(`SELECT COUNT(*) n FROM ${table} WHERE run=?`).bind(run.run).first()).n;
     return json({...manifest,ledger_counts:counts});
    }
    if(path==='/api/state'&&request.method==='GET'){
     const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});
-    return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:await ledger.summary(),provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
+    return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,study_design:INTERNAL_PILOT,study_design_hash:studyDesignHash,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:await ledger.summary(),provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
    }
    if(scopeMatch?.[2]&&request.method==='POST')return json({error:'Production enrollment is CLOSED. Explicit editor approval and enrollment opening are required.'},409);
    return json({error:'Production study is gated; preflight only.'},403);
   }
   const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});await ledger.initialize();const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
+  const pilot=environment==='Production'?new InternalPilot(env.DB,run.run):null;
   const readEvidence=async()=>{const r=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(run.run).first();return r?{...JSON.parse(r.payload),receipt_received_at:new Date(r.received_at).toISOString(),receipt_sha256:r.sha256}:null;};
   if(path==='/api/state'&&request.method==='GET'){
-   ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,study_role:run.role||'development',run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
+   if(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'){
+    ctx.waitUntil(pump(ledger,provider));const operational=await pilot.operational();
+    return json({state:operational.phase==='INVALIDATED'?'DO_NOT_ACT':operational.phase,environment,mode:run.mode,study_role:run.role,internal_pilot_phase:operational.phase,enrollment:operational.phase==='INTERNAL_PILOT_COLLECTING'&&env.PP_ENROLLMENT==='open'?'OPEN':'CLOSED',run:run.run,experiment_id:run.experiment_id,ledger:{run:run.run,environment,operational},provider:null,inference_valid:operational.phase!=='INVALIDATED',limitations:['Operational/protocol review only. No arm-level performance is shown. Initial participants and all provider events remain in the actual study. Material changes invalidate the entire run.']});
+   }
+   ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,study_role:run.role||'development',internal_pilot_phase:pilot?'INTERNAL_PILOT_PASS':null,run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
   }
   if(path.startsWith('/operator/')&&request.method==='POST'){
    if(!authorized(request,env.PP_OPERATOR_SECRET))return json({error:'Operator authentication required'},403);
@@ -75,9 +81,11 @@ export async function handleRequest(request,env,ctx){
     const windows=await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND p.exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,Date.now()-PROTOCOL.response_window_ms).first();
     return json({closed:true,open_response_windows:windows.n,ledger:await ledger.summary()});
    }
-   if(path==='/operator/drain'){await pump(ledger,provider);return json(await ledger.summary());}
+   if(path==='/operator/internal-pilot-review'&&pilot){const input=await request.json(),review=await pilot.review(input);if(review.enrollment_closed)await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();return json(review);}
+   if(path==='/operator/drain'){await pump(ledger,provider);return json(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'?await pilot.operational():await ledger.summary());}
    if(path==='/operator/evidence'){
     const input=await request.json();
+    if(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'&&input.results?.results)return json({error:'Arm-level results are withheld during internal-pilot review'},409);
     if(input.run?.run!==run.run||input.run?.experiment_id!==run.experiment_id||input.experiment?.feature?.id!==run.feature_id||input.environment_id!==(environment==='Development'?116182:116183))return json({error:'Provider snapshot contract mismatch'},409);
     await env.DB.prepare('INSERT INTO operator_evidence(run,received_at,payload,sha256) VALUES(?,?,?,?)').bind(run.run,Date.now(),JSON.stringify(input),hash(input)).run();return json({stored:true,sha256:hash(input)});
    }
@@ -92,6 +100,7 @@ export async function handleRequest(request,env,ctx){
    const limit=await env.DB.prepare('INSERT INTO request_limits(bucket,count) VALUES(?,1) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(`${run.run}:${id}:${Math.floor(Date.now()/60000)}`).first();
    if(limit.count>40)return json({error:'Please wait a moment before retrying'},429);
    const action=scopeMatch[2];
+   if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed; all records are preserved.'},409);
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
     const snapshot=await readEvidence();
@@ -101,7 +110,9 @@ export async function handleRequest(request,env,ctx){
      if(alreadyClosed)return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
     }
     if(environment==='Production'&&snapshot?.experiment?.status!=='completed'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
+    if(pilot&&snapshot?.experiment?.status!=='completed')await pilot.reserve(id);
     const flag=await provider.evaluate(id);
+    if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed.'},409);
     if(canonicalRead(snapshot,run,flag))return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:run.experiment_id,mode:'canonical',environment,study_complete:true});
     if(environment==='Production'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
     const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
