@@ -2,7 +2,7 @@ import {randomUUID,createHmac,timingSafeEqual}from'node:crypto';
 import assets from './assets.json';
 import facts from './facts.json';
 import {hash,experience}from'./core/payload.mjs';
-import {PROTOCOL,protocolHash}from'./core/protocol.mjs';
+import {PROTOCOL,protocolHash,score}from'./core/protocol.mjs';
 import {AsyncLedger}from'./core/async-ledger.mjs';
 import {Provider,drain}from'./core/provider.mjs';
 import {readout,canonicalRead}from'./core/readout.mjs';
@@ -79,9 +79,27 @@ export async function handleRequest(request,env,ctx){
    if(path==='/operator/close-enrollment'){
     await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();
     const windows=await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND p.exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,Date.now()-PROTOCOL.response_window_ms).first();
-    return json({closed:true,open_response_windows:windows.n,ledger:await ledger.summary()});
+    return json({closed:true,open_response_windows:windows.n,ledger:pilot?await pilot.operational():await ledger.summary()});
    }
-   if(path==='/operator/internal-pilot-review'&&pilot){const input=await request.json(),review=await pilot.review(input);if(review.enrollment_closed)await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();return json(review);}
+   if(path==='/operator/internal-pilot-review'&&pilot){
+    // Close first, for either assessment outcome. PASS is not broader-recruitment approval.
+    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();
+    const input=await request.json(),review=await pilot.review(input);return json({...review,enrollment_closed:true,broader_recruitment_requires_editor_approval:true});
+   }
+   if(path==='/operator/cohort-audit'&&pilot){
+    const operational=await pilot.operational(),now=Date.now();
+    const answers=(await env.DB.prepare('SELECT a.option,a.correct,a.submitted_at,p.exposed_at FROM answers a JOIN participants p USING(run,identity) WHERE a.run=?').bind(run.run).all()).results;
+    const scoring_mismatches=answers.filter(a=>score(a.option,facts)!==!!a.correct).length;
+    const invalid_answer_windows=answers.filter(a=>!a.exposed_at||a.submitted_at<a.exposed_at||a.submitted_at-a.exposed_at>PROTOCOL.response_window_ms).length;
+    const eligibility=(await env.DB.prepare('SELECT COUNT(*) n FROM participants p LEFT JOIN consents c USING(run,identity) WHERE p.run=? AND (c.identity IS NULL OR c.adult_english!=1 OR c.first_time!=1 OR c.protocol_hash!=?)').bind(run.run,protocolHash).first()).n;
+    const assignments=(await env.DB.prepare("SELECT COUNT(*) n FROM participants WHERE run=? AND (quarantined!=0 OR experiment_id!=? OR (variant='control' AND value!='correction_note') OR (variant='evidence_time_machine' AND value!='evidence_time_machine') OR variant NOT IN ('control','evidence_time_machine'))").bind(run.run,run.experiment_id).first()).n;
+    const exposure_timing=(await env.DB.prepare('SELECT COUNT(*) n FROM participants WHERE run=? AND exposed_at IS NOT NULL AND (rendered_at IS NULL OR exposed_at-rendered_at<?)').bind(run.run,PROTOCOL.exposure_dwell_ms).first()).n;
+    const duplicate_events=(await env.DB.prepare('SELECT COUNT(*) n FROM (SELECT identity,event FROM outbox WHERE run=? GROUP BY identity,event HAVING COUNT(*)>1)').bind(run.run).first()).n;
+    const windows=(await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,now-PROTOCOL.response_window_ms).first()).n;
+    const recent_unexposed=(await env.DB.prepare('SELECT COUNT(*) n FROM participants WHERE run=? AND exposed_at IS NULL AND assigned_at>?').bind(run.run,now-PROTOCOL.response_window_ms).first()).n;
+    const closed=!!await env.DB.prepare('SELECT run FROM run_controls WHERE run=?').bind(run.run).first();
+    return json({at:new Date(now).toISOString(),run:run.run,experiment_id:run.experiment_id,enrollment:env.PP_ENROLLMENT==='open'&&!closed&&operational.phase==='INTERNAL_PILOT_COLLECTING'?'OPEN':'CLOSED',operational,integrity:{scoring_mismatches,invalid_answer_windows,eligibility,assignments,exposure_timing,duplicate_events},open_response_windows:windows,recent_unexposed,performance_withheld:true,broader_recruitment_authorized:false});
+   }
    if(path==='/operator/drain'){await pump(ledger,provider);return json(pilot&&await pilot.phase()!=='INTERNAL_PILOT_PASS'?await pilot.operational():await ledger.summary());}
    if(path==='/operator/evidence'){
     const input=await request.json();
@@ -103,6 +121,7 @@ export async function handleRequest(request,env,ctx){
    if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed; all records are preserved.'},409);
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
+    if(pilot&&await pilot.phase()==='INTERNAL_PILOT_PASS'&&!run.broader_recruitment_approved_at&&!(await ledger.participant(id))?.assigned_at)return json({error:'Cohort review complete. Broader recruitment requires editor approval.'},409);
     const snapshot=await readEvidence();
     if(snapshot?.experiment?.status!=='completed'){
      if(!enrollmentOpen(run,environment,env.PP_ENROLLMENT,frozen))return json({error:'Enrollment is closed. Existing answers are preserved.'},409);

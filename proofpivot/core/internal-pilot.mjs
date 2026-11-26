@@ -5,7 +5,7 @@ export function validateReview(input,summary){
  if(!input||!['PASS','INVALIDATE'].includes(input.decision)||typeof input.early_arm_performance_reviewed!=='boolean'||typeof input.editor_note!=='string'||!input.editor_note.trim())throw Error('Explicit operational-only editor review required');
  if(!Array.isArray(input.material_changes)||input.material_changes.some(k=>!INTERNAL_PILOT.material_fields.includes(k)))throw Error('Invalid material-change declaration');
  if(input.decision==='PASS'){
-  if(input.early_arm_performance_reviewed||input.material_changes.length||!INTERNAL_PILOT.review_scope.every(k=>input.checks?.[k]===true)||summary.exposed<10||summary.admissions>20||summary.quarantined||summary.unresolved)throw Error('Internal pilot cannot pass');
+  if(input.early_arm_performance_reviewed||input.material_changes.length||!INTERNAL_PILOT.review_scope.every(k=>input.checks?.[k]===true)||summary.exposed<10||summary.submitted<10||summary.admissions>20||summary.quarantined||summary.unresolved)throw Error('Internal pilot cannot pass');
   const p=input.provider_reconciliation;
   if(p?.environment_id!==116183||p.warehouse_id!==8219||p.status!=='connected'||p.total_events_received!==summary.events+1||p.unique_events_count!==summary.events+1||!Number.isFinite(Date.parse(p.observed_at))||Math.abs(Date.now()-Date.parse(p.observed_at))>300000)throw Error('Fresh pooled provider reconciliation required');
  }
