@@ -38,7 +38,7 @@ export async function handleRequest(request,env,ctx){
   const readEvidence=async()=>{const r=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(run.run).first();return r?{...JSON.parse(r.payload),receipt_received_at:new Date(r.received_at).toISOString(),receipt_sha256:r.sha256}:null;};
   if(path==='/api/facts'&&request.method==='GET')return json({facts,correction_payload_hash:hash(facts)});
   if(path==='/api/state'&&request.method==='GET'){
-   ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
+   ctx.waitUntil(pump(ledger,provider));const summary=await ledger.summary(),snapshot=await readEvidence(),evidence=readout(snapshot,summary);return json({state:evidence.status,evidence,environment,mode:run.mode,study_role:run.role||'development',run:run.run,feature:'proofpivot_correction_experience',experiment_id:run.experiment_id,ledger:summary,provider:snapshot,limitations:['Only genuine human Production study data can support a comprehension claim.','Provider snapshots retain their actual as-of timestamp.','HTTP acceptance is distinct from warehouse visibility.']});
   }
   if(path.startsWith('/operator/')&&request.method==='POST'){
    if(!authorized(request,env.PP_OPERATOR_SECRET))return json({error:'Operator authentication required'},403);
@@ -66,11 +66,16 @@ export async function handleRequest(request,env,ctx){
    const action=scopeMatch[2];
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
-    const flag=await provider.evaluate(id),snapshot=await readEvidence();
+    const snapshot=await readEvidence();
+    if(environment==='Production'&&snapshot?.experiment?.status!=='completed'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
+    const flag=await provider.evaluate(id);
     if(canonicalRead(snapshot,run,flag))return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:run.experiment_id,mode:'canonical',environment,study_complete:true});
+    if(environment==='Production'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
     const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
     if(env.PP_ENROLLMENT!=='open'||control)return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
-    if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');await ledger.consent(id);const p=await ledger.assign(id,flag);await ledger.render(id);
+    if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');
+    await env.DB.prepare('INSERT OR IGNORE INTO consents(run,identity,protocol_hash,adult_english,first_time,at) VALUES(?,?,?,?,?,?)').bind(run.run,id,protocolHash,+!!input.adultEnglish,+!!input.firstTime,Date.now()).run();
+    await ledger.consent(id);const p=await ledger.assign(id,flag);await ledger.render(id);
     return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options.map(o=>o.label),exposure_dwell_ms:PROTOCOL.exposure_dwell_ms}});
    }
    if(action==='api/exposure'){
