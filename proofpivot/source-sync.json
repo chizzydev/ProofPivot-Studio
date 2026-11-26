@@ -1,9 +1,13 @@
 {
-  "at": "2026-11-26T13:11:01.228Z",
+  "at": "2026-11-26T13:32:45.231Z",
   "source": "Canonical ../app/lib and ../app/public",
   "hashes": {
     "engine.mjs": "dad2508d530eeda58f8b8e14049b17b0137bd6b3afdbf5cd8fa4fff2f18d781c",
-    "payload.mjs": "25312aca1b4df3c2c61348a37a379f912df782a9789a3a1221a6eaeca093b41b",
+    "payload.mjs": "e3caf62c2852573b6880ccbc09c419fa6f29ee016a34fa446f10f6e8c5274a88",
+    "payload-core.mjs": "85ebdb10699cdb0d64d46034692800a9a6f9f9d1c613d6354e26d60cf6e97226",
+    "ons-fixture.mjs": "8194f8ea721b269c56e9bd1aec0bb218687ab2d39b2443d72c4b4b7e31771fb9",
+    "sandbox.mjs": "b684d5896ecfa0aa9aa5b50ebe9860be7bc2893bbc4ac9ce74dc23ec9375b668",
+    "sandbox-route.mjs": "8c024ef531e3b03ac3cd2a68036c12ccd8692458909f81ff3dd42fb60480a7ef",
     "protocol.mjs": "a0f578b1f6ec7ed41a4830a7ce5b836b05bf3587816835da0b741524ba129951",
     "contract.mjs": "b482b02d0c910eba3e3bb58148acd1bd33d488da72d5f25c2dc125cfeaf8720b",
     "provider.mjs": "df49a16188fad7a291778074966091a7daca0ab0ae6171f46135c83cdd9e5a30",

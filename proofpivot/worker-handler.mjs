@@ -6,6 +6,7 @@ import {PROTOCOL,protocolHash}from'./core/protocol.mjs';
 import {AsyncLedger}from'./core/async-ledger.mjs';
 import {Provider,drain}from'./core/provider.mjs';
 import {readout,canonicalRead}from'./core/readout.mjs';
+import {serveSandbox}from'./core/sandbox-route.mjs';
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
@@ -19,8 +20,13 @@ function authorized(request,secret){const input=request.headers.get('Authorizati
 export async function handleRequest(request,env,ctx){
  try{
   const url=new URL(request.url),path=url.pathname;
+  const sandbox=serveSandbox(request,assets);if(sandbox)return sandbox;
   if(path==='/health')return json({ok:true,configured:!!env.PP_RUN,environment:env.PP_ENVIRONMENT||'UNCONFIGURED'});
-  const file=paths[path];if(file&&request.method==='GET')return new Response(assets[file],{headers:{...headers,'Content-Type':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'}});
+  const file=paths[path];if(file&&request.method==='GET'){
+   // Site navigation outside the frozen study reader; canonical study files stay byte-identical.
+   const content=path==='/judge'?assets[file].replace('</main>','<section class="sandbox-invite"><h2>Don\'t trust our prepared example.</h2><p>Enter a fresh supported revision and inspect its claim states through the same engine. Sandbox activity is outside the human study.</p><a class="button outline" href="/sandbox">Try your own revision</a></section></main>'):assets[file];
+   return new Response(content,{headers:{...headers,'Content-Type':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'}});
+  }
   const scopeMatch=path.match(/^(\/read(?:\/(?:left|right))?)(?:\/(api\/.*))?\/?$/);
   if(scopeMatch&&!scopeMatch[2]&&request.method==='GET'){
    // Cookie is scoped to this independent reader, with no script access.

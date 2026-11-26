@@ -4,6 +4,22 @@
 
 [Live app](https://proofpivot-correction-fork.ochresnow128.chatgpt.site) · [Judge Door](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/judge) · [Source](https://github.com/chizzydev/ProofPivot-Studio)
 
+[Try your own revision](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/sandbox) · [Input schema](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/sandbox-schema)
+
+## Repeatable revision sandbox
+
+`/sandbox` accepts 1–40 observations and 1–30 claims using structured fields. Enter original/revised plain decimal values, explicit units and measure basis, optional periods, sentence templates, direct observation/difference/percent-change calculations, 0–12 decimal places and current/historical semantics. Reset and rerun without a restart or operator secret. JSON import/export is optional; see the live schema for its form normalization and limits. Supplied data is always labelled **Judge-provided sandbox data**; nothing is scraped or independently verified.
+
+`proofpivot/core/payload-core.mjs` validates runtime input and calls the sole `engine.mjs` `revise()` implementation. The ONS fixture adapter in `ons-fixture.mjs` and actual BEA inputs use this same public pipeline. Canonical ONS payload SHA256 and all frozen study reader assets remain unchanged; `study-freeze.json` pins them and tests enforce equality. `payload.mjs` retains Node source capture verification and a compatibility adapter, not an ONS verdict function.
+
+Both sandbox explanations receive one immutable factual payload and the same deterministic SHA256. Source movement calls the same `revise()` function. An inconsistent payload raises `TRUTH_LOCK_MISMATCH`; previews fail closed. The canonical study presentations are deliberately left byte-identical rather than changed under the existing freeze.
+
+Sandbox computation is browser-local. Its static-only handler runs before reading environment variables or constructing a provider/ledger; it sets no cookie and has no write/event endpoint. Its module graph contains no Flagsmith, scoring, database or outbox import. Its CSP sets `connect-src 'none'` and `frame-src 'none'`. The study does not use arbitrary sandbox inputs. The Judge Door's new link is site navigation outside the frozen study reader.
+
+`npm test` includes deterministic repetition, 390 generated rational-operation cases across 13 precisions, generated precision-preserving cases, malformed-input refusal, 20 independent scenarios, actual ONS/BEA public-pipeline fixtures, truth-lock failure and frozen-study preservation. `npx playwright install chromium` then `npx playwright test` runs the browser sequence through the exact packaged static assets and production sandbox handler. It fills fresh inputs, checks all four states, checks both preview hashes, changes evidence, reruns, resets, and performs 20 complete new scenarios. Every requested URL is allowlisted as a static GET; study or external requests fail the test. CI runs Chromium E2E after domain tests and build, with no study secrets or backend available.
+
+Limits: no semantic unit conversion, source verification, universal ingestion, AI, database persistence or unique-human proof. User-supplied basis strings assert compatibility; they do not establish external factual correctness. The friendly form supports flat calculations on up to two observations; the shared builder also supports nested expressions to depth four. Reset/reload discards inputs. The Production human pilot remains unstarted until a separate review after this amendment.
+
 Deployable Sites server with a D1-backed first-answer ledger and durable outbox. Both `/read` and `/judge` use one handler, canonical facts, provider evaluation, meaningful exposure and server scoring. `proofpivot/core` and reader assets are synchronized from the canonical workspace; `source-sync.json` records hashes.
 
 Node 24+. Use the Sites dependency and build helpers. D1 migrations: `drizzle/`. Runtime secrets: `FLAGSMITH_ENVIRONMENT_KEY`, `PP_SESSION_SECRET`, `PP_OPERATOR_SECRET`. Configuration: `PP_ENVIRONMENT`, `PP_RUN`, `PP_ENROLLMENT`. Never commit secret values.
