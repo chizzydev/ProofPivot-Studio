@@ -1,0 +1,675 @@
+{
+  "classification": "SIMULATED HACKATHON TRAFFIC — NOT HUMAN EVIDENCE",
+  "archived_at": "2026-11-27T12:38:53.457Z",
+  "run": {
+    "run": "hackathon-simulation-v1",
+    "role": "hackathon_simulation",
+    "environment": "Simulation",
+    "environment_name": "Hackathon Simulation",
+    "environment_id": 121298,
+    "project_id": 53981,
+    "feature_id": 304953,
+    "variant_id": 36968,
+    "experiment_id": 912,
+    "warehouse_id": 13282,
+    "mode": "ab",
+    "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+    "protocol_hash": "d87a8ee9f5e1d8f8bc92de87b8dfab85c35eed8a2a0f43aac72749da5ca87a84",
+    "model_hash": "6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027",
+    "classification": "SIMULATED HACKATHON TRAFFIC",
+    "expected_sessions": 800,
+    "status": "FROZEN_BEFORE_FIRST_EVENT"
+  },
+  "model": {
+    "frozen_at": "2026-11-27T03:17:12.054Z",
+    "model": {
+      "version": "hackathon-simulation-v1",
+      "classification": "SIMULATED HACKATHON TRAFFIC",
+      "seed": 20261127,
+      "attempted_sessions": 800,
+      "correctness_probability": {
+        "control": 0.55,
+        "evidence_time_machine": 0.75
+      },
+      "completion_probability": {
+        "control": 0.98,
+        "evidence_time_machine": 0.98
+      },
+      "draw_algorithm": "SHA256(seed:index:purpose), first uint32 big-endian / 2^32; independent completion, correctness and wrong-option draws. Fixed before assignment.",
+      "identity_algorithm": "Run-bound server HMAC UUID derived from frozen model hash and session index; signed HttpOnly cookie remains stable across requests.",
+      "exposure_rule": "Assigned explanation rendered; first factual sentence at least 50% visible in a visible document for 2000 cumulative milliseconds. Same rule in both arms.",
+      "response_window_ms": 600000,
+      "wrong_answer": "Uniform among the three non-key options; backend computes correctness from the submitted option.",
+      "reason": "Deliberate illustrative 20 percentage point correctness contrast with equal high completion, useful for demonstrating recovery of a specified mechanism signal and a non-degrading guardrail. These probabilities are assumptions, not observed human behavior.",
+      "stopping_rule": "Exactly 800 distinct indexed sessions. Resume failed infrastructure attempts at the same index/identity; never change probabilities/seed or replace a session to obtain a preferred result. Seal all new answers after the cohort completes.",
+      "analysis_rule": "Inspect only after fixed cohort and transport reconciliation. Crossing-zero interval is INCONCLUSIVE, integrity failure DO_NOT_ACT. No claim of improved human comprehension."
+    },
+    "model_hash": "6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027"
+  },
+  "traffic": {
+    "attempted_unique_sessions": 800,
+    "successful_sessions": 800,
+    "terminal_failures": 0,
+    "infrastructure_retries": 1,
+    "counts": {
+      "control": {
+        "identities": 380,
+        "exposures": 380,
+        "submissions": 369,
+        "correct": 207
+      },
+      "evidence_time_machine": {
+        "identities": 420,
+        "exposures": 420,
+        "submissions": 411,
+        "correct": 324
+      }
+    }
+  },
+  "actual_provider_snapshot": {
+    "at": "2026-11-27T12:29:15.746Z",
+    "environment_id": 121298,
+    "run": {
+      "run": "hackathon-simulation-v1",
+      "role": "hackathon_simulation",
+      "environment": "Simulation",
+      "environment_name": "Hackathon Simulation",
+      "environment_id": 121298,
+      "project_id": 53981,
+      "feature_id": 304953,
+      "variant_id": 36968,
+      "experiment_id": 912,
+      "warehouse_id": 13282,
+      "mode": "ab",
+      "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+      "protocol_hash": "d87a8ee9f5e1d8f8bc92de87b8dfab85c35eed8a2a0f43aac72749da5ca87a84",
+      "model_hash": "6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027",
+      "classification": "SIMULATED HACKATHON TRAFFIC",
+      "expected_sessions": 800,
+      "status": "FROZEN_BEFORE_FIRST_EVENT"
+    },
+    "experiment": {
+      "id": 912,
+      "feature": {
+        "id": 304953,
+        "name": "proofpivot_correction_experience",
+        "type": "MULTIVARIATE",
+        "initial_value": "correction_note",
+        "multivariate_options": [
+          {
+            "id": 36968,
+            "uuid": "5a8d9772-9ab8-4d95-bb36-defda67f9f52",
+            "type": "unicode",
+            "integer_value": null,
+            "string_value": "evidence_time_machine",
+            "boolean_value": null,
+            "default_percentage_allocation": 0,
+            "key": "evidence_time_machine"
+          }
+        ]
+      },
+      "name": "proofpivot-correction-fork-hackathon-simulation",
+      "hypothesis": "SIMULATED HACKATHON TRAFFIC: under a fixed seeded demonstration model (control 55%, treatment 75% correctness; completion 98% in both; N=800), does the real application/Flagsmith mechanism recover the declared contrast? No human comprehension claim. Model hash 6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027",
+      "status": "running",
+      "metrics": [
+        {
+          "id": 1086,
+          "metric": 960,
+          "metric_name": "ProofPivot Revision Check Correct",
+          "aggregation": "occurrence",
+          "direction": "up",
+          "expected_direction": "increase",
+          "created_at": "2026-11-27T03:17:11.114663Z"
+        },
+        {
+          "id": 1087,
+          "metric": 961,
+          "metric_name": "ProofPivot Revision Check Submitted",
+          "aggregation": "occurrence",
+          "direction": "up",
+          "expected_direction": "not_decrease",
+          "created_at": "2026-11-27T03:17:11.114680Z"
+        }
+      ],
+      "experiment_rollout": {
+        "enabled": true,
+        "rollout_percentage": 100,
+        "feature_state_value": {
+          "type": "string",
+          "value": "correction_note"
+        },
+        "multivariate_feature_state_values": [
+          {
+            "multivariate_feature_option": 36968,
+            "percentage_allocation": 50
+          }
+        ],
+        "audience": {
+          "match": "any",
+          "segments": []
+        }
+      },
+      "created_at": "2026-11-27T03:17:11.110967Z",
+      "updated_at": "2026-11-27T07:31:22.010409Z",
+      "started_at": "2026-11-27T07:31:21.994975Z",
+      "ended_at": null,
+      "rollout_decision": null,
+      "rollout_variant": null
+    },
+    "exposures": {
+      "exposures": {
+        "as_of": "2026-11-27T12:24:26.206795Z",
+        "last_error_at": null,
+        "refresh_requested_at": "2026-11-27T12:24:26.141361Z",
+        "payload": {
+          "timeseries": {
+            "points": [
+              {
+                "bucket": "2026-11-27T07:00:00+00:00",
+                "new_identities": {
+                  "control": 380,
+                  "evidence_time_machine": 420
+                }
+              }
+            ],
+            "granularity": "hour"
+          },
+          "excluded_identities": 0
+        },
+        "is_final": false
+      }
+    },
+    "results": {
+      "results": {
+        "as_of": "2026-11-27T12:24:26.806230Z",
+        "last_error_at": null,
+        "refresh_requested_at": "2026-11-27T12:24:26.741077Z",
+        "payload": {
+          "metrics": [
+            {
+              "variants": {
+                "control": {
+                  "n": 380,
+                  "sum": 207,
+                  "sum_squares": 207
+                },
+                "evidence_time_machine": {
+                  "n": 420,
+                  "sum": 324,
+                  "sum_squares": 324
+                }
+              },
+              "inference": {
+                "evidence_time_machine": {
+                  "lift": 0.4161490683229814,
+                  "ci_low": 0.26636190541592714,
+                  "ci_high": 0.5659362312300356,
+                  "chance_to_win": 0.999999974142041
+                }
+              },
+              "metric_id": 960,
+              "conversions_timeseries": {
+                "points": [
+                  {
+                    "bucket": "2026-11-27T07:00:00+00:00",
+                    "converted_identities": {
+                      "control": 207,
+                      "evidence_time_machine": 324
+                    }
+                  }
+                ],
+                "granularity": "hour"
+              }
+            },
+            {
+              "variants": {
+                "control": {
+                  "n": 380,
+                  "sum": 369,
+                  "sum_squares": 369
+                },
+                "evidence_time_machine": {
+                  "n": 420,
+                  "sum": 411,
+                  "sum_squares": 411
+                }
+              },
+              "inference": {
+                "evidence_time_machine": {
+                  "lift": 0.007742934572202807,
+                  "ci_low": -0.014856430366925785,
+                  "ci_high": 0.030342299511331397,
+                  "chance_to_win": 0.7490545967772012
+                }
+              },
+              "metric_id": 961,
+              "conversions_timeseries": {
+                "points": [
+                  {
+                    "bucket": "2026-11-27T07:00:00+00:00",
+                    "converted_identities": {
+                      "control": 369,
+                      "evidence_time_machine": 411
+                    }
+                  }
+                ],
+                "granularity": "hour"
+              }
+            }
+          ],
+          "srm_p_value": null,
+          "exposures_timeseries": {
+            "points": [
+              {
+                "bucket": "2026-11-27T07:00:00+00:00",
+                "new_identities": {
+                  "control": 380,
+                  "evidence_time_machine": 420
+                }
+              }
+            ],
+            "granularity": "hour"
+          }
+        },
+        "is_final": false
+      }
+    }
+  },
+  "local_ledger": {
+    "run": "hackathon-simulation-v1",
+    "environment": "Simulation",
+    "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+    "participants": [
+      {
+        "variant": "control",
+        "assigned": 380,
+        "exposed": 380,
+        "quarantined": 0
+      },
+      {
+        "variant": "evidence_time_machine",
+        "assigned": 420,
+        "exposed": 420,
+        "quarantined": 0
+      }
+    ],
+    "answers": [
+      {
+        "variant": "control",
+        "submitted": 369,
+        "correct": 207
+      },
+      {
+        "variant": "evidence_time_machine",
+        "submitted": 411,
+        "correct": 324
+      }
+    ],
+    "outbox": [
+      {
+        "event": "$flag_exposure",
+        "status": "HTTP_ACCEPTED",
+        "count": 800
+      },
+      {
+        "event": "proofpivot_revision_check_correct",
+        "status": "HTTP_ACCEPTED",
+        "count": 531
+      },
+      {
+        "event": "proofpivot_revision_check_submitted",
+        "status": "HTTP_ACCEPTED",
+        "count": 780
+      }
+    ]
+  },
+  "integrity": {
+    "status": "HUMAN_REVIEW_REQUIRED",
+    "provider_as_of": "2026-11-27T12:24:26.806230Z",
+    "primary": {
+      "variants": {
+        "control": {
+          "n": 380,
+          "sum": 207,
+          "sum_squares": 207
+        },
+        "evidence_time_machine": {
+          "n": 420,
+          "sum": 324,
+          "sum_squares": 324
+        }
+      },
+      "inference": {
+        "evidence_time_machine": {
+          "lift": 0.4161490683229814,
+          "ci_low": 0.26636190541592714,
+          "ci_high": 0.5659362312300356,
+          "chance_to_win": 0.999999974142041
+        }
+      },
+      "metric_id": 960,
+      "conversions_timeseries": {
+        "points": [
+          {
+            "bucket": "2026-11-27T07:00:00+00:00",
+            "converted_identities": {
+              "control": 207,
+              "evidence_time_machine": 324
+            }
+          }
+        ],
+        "granularity": "hour"
+      }
+    },
+    "guardrail": {
+      "variants": {
+        "control": {
+          "n": 380,
+          "sum": 369,
+          "sum_squares": 369
+        },
+        "evidence_time_machine": {
+          "n": 420,
+          "sum": 411,
+          "sum_squares": 411
+        }
+      },
+      "inference": {
+        "evidence_time_machine": {
+          "lift": 0.007742934572202807,
+          "ci_low": -0.014856430366925785,
+          "ci_high": 0.030342299511331397,
+          "chance_to_win": 0.7490545967772012
+        }
+      },
+      "metric_id": 961,
+      "conversions_timeseries": {
+        "points": [
+          {
+            "bucket": "2026-11-27T07:00:00+00:00",
+            "converted_identities": {
+              "control": 369,
+              "evidence_time_machine": 411
+            }
+          }
+        ],
+        "granularity": "hour"
+      }
+    },
+    "discrepancies": [],
+    "native_srm_p_value": null,
+    "independent_srm_p_value": 0.16789858712876657,
+    "interval": [
+      0.26636190541592714,
+      0.5659362312300356
+    ],
+    "chance_to_win": 0.999999974142041,
+    "relative_lift": 0.4161490683229814,
+    "guardrail_interval_pp": [
+      -1.442637580367267,
+      2.9463969788634965
+    ],
+    "guardrail_healthy": true
+  },
+  "warehouse": {
+    "id": 13282,
+    "status": "connected",
+    "total_events_received": 2112,
+    "unique_events_count": 4
+  },
+  "transport": {
+    "reconciled": true,
+    "expected_rows": 2112,
+    "observed_rows": 2112,
+    "expected_event_names": [
+      "$flag_exposure",
+      "proofpivot_infrastructure_canary",
+      "proofpivot_revision_check_correct",
+      "proofpivot_revision_check_submitted"
+    ],
+    "observed_event_names": [
+      "$flag_exposure",
+      "proofpivot_infrastructure_canary",
+      "proofpivot_revision_check_correct",
+      "proofpivot_revision_check_submitted"
+    ],
+    "distinct_event_name_count": 4,
+    "row_count_matches": true,
+    "event_vocabulary_matches": true,
+    "unresolved": 0,
+    "scope": "Aggregate transport and event-vocabulary checks, not row-level event-ID equality or an exactly-once guarantee."
+  },
+  "editor_decision": {
+    "at": "2026-11-27T12:29:19.846Z",
+    "classification": "SIMULATED HACKATHON TRAFFIC",
+    "approval_provenance": "User-authorized delegated editor decision under the superseding simulation mandate. The user did not personally review this eventual result in a new confirmation.",
+    "instruction_attachment": "b1e953e3-2681-4548-a8ac-27f06a515c97/Pasted text.txt",
+    "provider_as_of": "2026-11-27T12:24:26.806230Z",
+    "integrity": {
+      "status": "HUMAN_REVIEW_REQUIRED",
+      "provider_as_of": "2026-11-27T12:24:26.806230Z",
+      "primary": {
+        "variants": {
+          "control": {
+            "n": 380,
+            "sum": 207,
+            "sum_squares": 207
+          },
+          "evidence_time_machine": {
+            "n": 420,
+            "sum": 324,
+            "sum_squares": 324
+          }
+        },
+        "inference": {
+          "evidence_time_machine": {
+            "lift": 0.4161490683229814,
+            "ci_low": 0.26636190541592714,
+            "ci_high": 0.5659362312300356,
+            "chance_to_win": 0.999999974142041
+          }
+        },
+        "metric_id": 960,
+        "conversions_timeseries": {
+          "points": [
+            {
+              "bucket": "2026-11-27T07:00:00+00:00",
+              "converted_identities": {
+                "control": 207,
+                "evidence_time_machine": 324
+              }
+            }
+          ],
+          "granularity": "hour"
+        }
+      },
+      "guardrail": {
+        "variants": {
+          "control": {
+            "n": 380,
+            "sum": 369,
+            "sum_squares": 369
+          },
+          "evidence_time_machine": {
+            "n": 420,
+            "sum": 411,
+            "sum_squares": 411
+          }
+        },
+        "inference": {
+          "evidence_time_machine": {
+            "lift": 0.007742934572202807,
+            "ci_low": -0.014856430366925785,
+            "ci_high": 0.030342299511331397,
+            "chance_to_win": 0.7490545967772012
+          }
+        },
+        "metric_id": 961,
+        "conversions_timeseries": {
+          "points": [
+            {
+              "bucket": "2026-11-27T07:00:00+00:00",
+              "converted_identities": {
+                "control": 369,
+                "evidence_time_machine": 411
+              }
+            }
+          ],
+          "granularity": "hour"
+        }
+      },
+      "discrepancies": [],
+      "native_srm_p_value": null,
+      "independent_srm_p_value": 0.16789858712876657,
+      "interval": [
+        0.26636190541592714,
+        0.5659362312300356
+      ],
+      "chance_to_win": 0.999999974142041,
+      "relative_lift": 0.4161490683229814,
+      "guardrail_interval_pp": [
+        -1.442637580367267,
+        2.9463969788634965
+      ],
+      "guardrail_healthy": true
+    },
+    "transport_reconciled": true,
+    "selected": "evidence_time_machine",
+    "rationale": "Actual fixed-cohort provider interval clears zero, guardrail is healthy and local/provider counts reconcile; select treatment only within the declared simulated model.",
+    "human_comprehension_claim": false
+  },
+  "real_completion": {
+    "id": 912,
+    "feature": {
+      "id": 304953,
+      "name": "proofpivot_correction_experience",
+      "type": "MULTIVARIATE",
+      "initial_value": "correction_note",
+      "multivariate_options": [
+        {
+          "id": 36968,
+          "uuid": "5a8d9772-9ab8-4d95-bb36-defda67f9f52",
+          "type": "unicode",
+          "integer_value": null,
+          "string_value": "evidence_time_machine",
+          "boolean_value": null,
+          "default_percentage_allocation": 0,
+          "key": "evidence_time_machine"
+        }
+      ]
+    },
+    "name": "proofpivot-correction-fork-hackathon-simulation",
+    "hypothesis": "SIMULATED HACKATHON TRAFFIC: under a fixed seeded demonstration model (control 55%, treatment 75% correctness; completion 98% in both; N=800), does the real application/Flagsmith mechanism recover the declared contrast? No human comprehension claim. Model hash 6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027",
+    "status": "completed",
+    "metrics": [
+      {
+        "id": 1086,
+        "metric": 960,
+        "metric_name": "ProofPivot Revision Check Correct",
+        "aggregation": "occurrence",
+        "direction": "up",
+        "expected_direction": "increase",
+        "created_at": "2026-11-27T03:17:11.114663Z"
+      },
+      {
+        "id": 1087,
+        "metric": 961,
+        "metric_name": "ProofPivot Revision Check Submitted",
+        "aggregation": "occurrence",
+        "direction": "up",
+        "expected_direction": "not_decrease",
+        "created_at": "2026-11-27T03:17:11.114680Z"
+      }
+    ],
+    "created_at": "2026-11-27T03:17:11.110967Z",
+    "updated_at": "2026-11-27T12:29:17.561695Z",
+    "started_at": "2026-11-27T07:31:21.994975Z",
+    "ended_at": "2026-11-27T12:29:17.311347Z",
+    "rollout_decision": "variant",
+    "rollout_variant": 36968
+  },
+  "fork_collapse": {
+    "at": "2026-11-27T12:29:37.062Z",
+    "classification": "SIMULATED HACKATHON TRAFFIC",
+    "run": "hackathon-simulation-v1",
+    "experiment_id": 912,
+    "feature_id": 304953,
+    "same_flag": "proofpivot_correction_experience",
+    "fresh_backend_provider_evaluations": true,
+    "local_renderer_override": false,
+    "sessions": [
+      {
+        "index": 4,
+        "identity_sha256": "b0591db88d8a97664478b6f5d9d3f37f89ada2baee874c13087a24d4a4d54c0e",
+        "before": {
+          "value": "correction_note",
+          "variant": "control",
+          "experiment_id": 912
+        },
+        "after": {
+          "value": "evidence_time_machine",
+          "variant": "evidence_time_machine",
+          "experiment": null
+        },
+        "observed_at": "2026-11-27T12:29:35.688Z"
+      },
+      {
+        "index": 1,
+        "identity_sha256": "1cb3da90345dfb79a4cfd3b9988d702a117d70fc151686079e454f43ba303ada",
+        "before": {
+          "value": "evidence_time_machine",
+          "variant": "evidence_time_machine",
+          "experiment_id": 912
+        },
+        "after": {
+          "value": "evidence_time_machine",
+          "variant": "evidence_time_machine",
+          "experiment": null
+        },
+        "observed_at": "2026-11-27T12:29:37.062Z"
+      }
+    ],
+    "status": "FORK_COLLAPSED"
+  },
+  "limits": [
+    "Declared probabilities are illustrative, not observed human behavior.",
+    "Aggregate agreement is not raw event-ID equality or exactly-once transport.",
+    "The seed reproduces behavior draws; exact historical provider bucketing also depends on persisted identities and environment state.",
+    "Production907 remains closed, unstarted and zero-traffic.",
+    "Strict five-minute pre-completion observation sequence was not evidenced; later stability confirmation is post-completion.",
+    "Live provider partial-rejection/crash-after-acceptance drill remains unexecuted; submission packaging is on hold."
+  ],
+  "post_completion_stability": {
+    "at": "2026-11-27T12:43:43.680Z",
+    "classification": "POST-COMPLETION STABILITY CONFIRMATION, NOT RETROACTIVE PRE-COMPLETION COMPLIANCE",
+    "first_observation": "2026-11-27T12:25:25.661Z",
+    "last_observation": "2026-11-27T12:42:52.121Z",
+    "elapsed_ms": 1046460,
+    "completion_at": "2026-11-27T12:29:21.790Z",
+    "stable_counts_and_provider_result": true,
+    "transport": {
+      "reconciled": true,
+      "expected_rows": 2112,
+      "observed_rows": 2112,
+      "expected_event_names": [
+        "$flag_exposure",
+        "proofpivot_infrastructure_canary",
+        "proofpivot_revision_check_correct",
+        "proofpivot_revision_check_submitted"
+      ],
+      "observed_event_names": [
+        "$flag_exposure",
+        "proofpivot_infrastructure_canary",
+        "proofpivot_revision_check_correct",
+        "proofpivot_revision_check_submitted"
+      ],
+      "distinct_event_name_count": 4,
+      "row_count_matches": true,
+      "event_vocabulary_matches": true,
+      "unresolved": 0,
+      "scope": "Aggregate transport and event-vocabulary checks, not row-level event-ID equality or an exactly-once guarantee."
+    },
+    "pre_completion_five_minute_sequence_pass": false,
+    "raw_event_equality_claim": false
+  }
+}

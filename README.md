@@ -22,7 +22,31 @@ The behavior model was frozen before traffic: **800 indexed sessions**, seed **2
 
 The actual historical Development A/A **519** is preserved: 69/64 exposed identities and 33 correct responses in each key, approximately 66% treatment win probability, with a 95% relative-lift interval of **-29.36% to +44.99%**. The interval spans zero, so no winner was manufactured from noise.
 
-CI covers 54 domain checks and seven Chromium E2E scenarios, including auxiliary-route isolation, stable simulation identity, honest seeded behavior, manual QA deadline, original reader recovery, and repeatable sandbox. No live credentials or events are used in CI. Run `npm ci`, `npm test`, `npx playwright install chromium`, `npx playwright test` and `npm run build` with Node 24+.
+The automated suite covers 56 domain checks and eight Chromium E2E scenarios, including auxiliary-route isolation, stable simulation identity, honest seeded behavior, manual QA deadline, original reader recovery, and repeatable sandbox. No live credentials or events are used in CI. Run `npm ci`, `npm test`, `npx playwright install chromium`, `npx playwright test` and `npm run build` with Node 24+.
+
+## Completed competition run — actual provider result
+
+**SIMULATED HACKATHON TRAFFIC.** The fixed cohort finished; no new probability, seed or favorable-result rerun was used. One transient DNS navigation failure was retried at the same indexed identity. All 800 unique sessions succeeded, with zero terminal failures.
+
+| Actual count | Control | Evidence Time Machine |
+|---|---:|---:|
+| Assigned / meaningfully exposed | 380 | 420 |
+| First answers submitted | 369 | 411 |
+| Backend-scored correct | 207 | 324 |
+
+Flagsmith result as-of **2026-11-27 12:24:26.806230 UTC**: relative lift **+41.61%**, 95% credible interval **+26.64% to +56.59%**, treatment win probability **99.999997%**. The guardrail completion difference is about **+0.75 percentage points**, with interval **-1.44 to +2.95 points**, above the predeclared -5-point harm margin. Independent sample-ratio p=**0.1679**, native SRM unavailable/null, provider exclusions0, quarantines0. The interval is compatible with a positive difference **under the declared behavior model**; it does not establish improved human comprehension.
+
+All **2111 logical experiment events** were HTTP-accepted; the dedicated warehouse contains **2112 total rows**, including the one non-participant infrastructure canary, across **four distinct event names**. Flagsmith's `unique_events_count` means distinct event names, not unique rows; this [provider query](https://github.com/Flagsmith/flagsmith/blob/f4de714504934be8b5dd4308aa9e1fbab44d05ee/api/experimentation/warehouses/queries.py#L45-L50) explains the source-backed diagnostic correction. Per-arm provider and local exposure/submission/correct counts agree. Aggregate agreement does not prove raw event-ID equality or exactly-once delivery.
+
+The user-authorized **delegated editor decision** selected treatment only after the actual interval, guardrail and reconciliation passed; it is not represented as a new personal human review. Flagsmith completed experiment912 with `rollout_decision=variant`, `rollout_variant=36968`, on the SAME feature304953. Two actual browser identities previously receiving different values both freshly received `evidence_time_machine` with no experiment membership. The private retained contexts and the public Judge Door both verified **FORK COLLAPSED** through real backend/provider reads. No local renderer switch emulates final rollout.
+
+[Archived actual result and collapse receipt](proofpivot/receipts/hackathon-simulation-result.json) records provider/as-of values, model, actual counts and provenance; it does not feed invented totals to the UI. The live Judge Door reads the normal ledger and authenticated actual provider snapshots. Public initial views are explicitly historical replays of recorded assignments; refresh performs a fresh same-flag evaluation. Sealed replays cannot add exposures or answers.
+
+Production907 stays CLOSED, UNSTARTED and clean. Its dormant future human-checkpoint adapter also needs the counter-semantics correction before any future human execution; its frozen manifest has deliberately not been rewritten. Genuine-human recruitment is not a current competition workstream. Original invalidated578 QA records are preserved and never used as study evidence.
+
+Strict R10 sequencing gap: the first-to-completion reconciled observation interval was under five minutes, although the cohort was sealed and all response windows had expired during the approval-review pause. A later unchanged post-completion snapshot is recorded as post-completion confirmation, not retroactive satisfaction of the pre-completion sequence. E4 live partial-rejection/crash-after-acceptance proof is also still unexecuted.
+
+Submission packaging has not begun. A final hostile audit distinguishes completed mechanism gates from remaining submission/video and live-fault-drill evidence gaps; no missing evidence is certified green.
 
 ## Production incident remediation — R17
 
