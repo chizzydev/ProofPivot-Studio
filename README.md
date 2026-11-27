@@ -8,7 +8,7 @@
 
 ## Current competition strategy: simulated participant, real mechanism
 
-[Official Track 1 rules and FAQ](https://www.wemakedevs.org/hackathons/flagsmith) permit scripted visits/events. Genuine-human recruitment is no longer a competition blocker. Production **907 / prod-ons-study-v2-r17 remains CLOSED, UNSTARTED and uncontaminated** as a human-ready infrastructure proof. Manual QA and simulated events never count as human comprehension evidence.
+[Official Track 1 rules and FAQ](https://www.wemakedevs.org/hackathons/flagsmith) permit scripted visits/events. Genuine-human recruitment is no longer a competition blocker. Production **907 / prod-ons-study-v2-r17 remains CLOSED, UNSTARTED and uncontaminated** as a clean closed Production preflight proof. Manual QA and simulated events never count as human comprehension evidence.
 
 The dedicated **Hackathon Simulation** environment **121298**, experiment **912**, warehouse **13282**, uses the SAME feature **304953** `proofpivot_correction_experience`, control key `control` / value `correction_note`, treatment option **36968** `evidence_time_machine`, primary `proofpivot_revision_check_correct` (metric 960), and guardrail `proofpivot_revision_check_submitted` (metric 961).
 
@@ -54,7 +54,7 @@ Experiment 578 is invalid for inference after one project-aware manual QA exposu
 
 Fresh experiment **907**, run **prod-ons-study-v2-r17**, is unstarted with enrollment CLOSED pending a new explicit editor approval. The response deadline is **600000 ms (10 minutes)** from first meaningful exposure, using server time. Reload and repeat exposure never reset it. Expiry disables submission, explains that no answer was recorded, and offers a deliberate practice-only restart at `/practice`; practice has no script, study identity, answer persistence, provider evaluation or events. Existing first answers stay immutable.
 
-Ordinary `/read` has no visible Flagsmith refresh control. Judge Door technical readers use a separate `pp_proof` identity and **Development** SDK key, with no Production DB, exposure, scorer or event sender. Archived real Development completion evidence remains available; a refresh performs a real same-flag Development evaluation. `/sandbox` remains browser-local and isolated.
+Ordinary `/read` has no visible Flagsmith refresh control. Legacy technical readers at `/read/left` and `/read/right` use a separate `pp_proof` identity and **Development** SDK key, with no Production DB, exposure, scorer or event sender. Archived real Development completion evidence remains available; a refresh performs a real same-flag Development evaluation. `/sandbox` remains browser-local and isolated.
 
 The factual payload, arm presentation, question/options, answer key, scoring, primary metric, guardrail and 50/50 allocation are unchanged. `study-freeze.json` pins the new protocol and assets. The frozen transport baseline includes the preserved canary and invalidated QA exposure; it never subtracts identities from experiment results. The first five eligible genuine participants, after new approval, remain the actual study on internal-checkpoint PASS. Any material change invalidates the entire run. No early arm-performance review is permitted.
 
@@ -74,7 +74,7 @@ Sandbox computation is browser-local. Its static-only handler runs before readin
 
 Limits: no semantic unit conversion, source verification, universal ingestion, AI, database persistence or unique-human proof. User-supplied basis strings assert compatibility; they do not establish external factual correctness. The friendly form supports flat calculations on up to two observations; the shared builder also supports nested expressions to depth four. Reset/reload discards inputs. The fresh Production study remains unstarted until a new explicit editor approval.
 
-Deployable Sites server with a D1-backed first-answer ledger and durable outbox. The normal `/read` uses the study handler, canonical facts, meaningful exposure and server scoring; Judge Door technical readers are isolated in Development. `proofpivot/core` and reader assets are synchronized from the canonical workspace; `source-sync.json` records hashes.
+Deployable Sites server with a D1-backed first-answer ledger and durable outbox. The normal `/read` uses the study handler, canonical facts, meaningful exposure and server scoring; Legacy technical readers are isolated in Development. The current `/judge` redirects to `/simulation/judge`, which replays two recorded Simulation 912 sessions and obtains fresh Simulation provider evaluations without new study events. `proofpivot/core` and reader assets are synchronized from the canonical workspace; `source-sync.json` records hashes.
 
 Node 24+. Use the Sites dependency and build helpers. D1 migrations: `drizzle/`. Runtime secrets: `FLAGSMITH_ENVIRONMENT_KEY`, `PP_SESSION_SECRET`, `PP_OPERATOR_SECRET`, `FLAGSMITH_JUDGE_ENVIRONMENT_KEY` (Development only). Configuration: `PP_ENVIRONMENT`, `PP_RUN`, `PP_ENROLLMENT`. Never commit secret values.
 
