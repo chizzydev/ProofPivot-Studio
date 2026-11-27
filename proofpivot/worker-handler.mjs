@@ -17,7 +17,7 @@ import {InternalPilot,INTERNAL_PILOT,studyDesignHash,canShowStudyPerformance}fro
 
 const headers={'X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Cache-Control':'no-store','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; frame-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'; object-src 'none'"};
 const json=(v,status=200,extra={})=>new Response(JSON.stringify(v),{status,headers:{...headers,'Content-Type':'application/json',...extra}});
-const paths={'/':'index.html','/judge':'judge.html','/style.css':'style.css','/app.js':'app.js','/judge.js':'judge.js','/engine.js':'engine.js'};
+const paths={'/':'public-index.html','/correction':'canonical.html','/canonical.js':'canonical.js','/championship.css':'championship.css','/judge':'judge.html','/style.css':'style.css','/app.js':'app.js','/judge.js':'judge.js','/engine.js':'engine.js'};
 const running=new Map();
 async function pump(ledger,provider){
  const key=ledger.environment+':'+ledger.run;if(running.has(key))return running.get(key);
@@ -30,11 +30,22 @@ export async function handleRequest(request,env,ctx,{clock=()=>Date.now(),provid
   const url=new URL(request.url),path=url.pathname;
   const sandbox=serveSandbox(request,assets);if(sandbox)return sandbox;
   if(path==='/health')return json({ok:true,configured:!!env.PP_RUN,environment:env.PP_ENVIRONMENT||'UNCONFIGURED'});
+  if(path==='/favicon.ico'&&request.method==='GET')return new Response(null,{status:204,headers:{'Cache-Control':'public, max-age=86400'}});
   if(path==='/practice'&&request.method==='GET')return new Response(assets['practice.html'],{headers:{...headers,'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"}});
   const file=paths[path];if(file&&request.method==='GET'){
    // Site navigation outside the frozen study reader; canonical study files stay byte-identical.
    const content=path==='/judge'?assets[file].replace('</main>','<section class="sandbox-invite"><h2>Don\'t trust our prepared example.</h2><p>Enter a fresh supported revision and inspect its claim states through the same engine. Sandbox activity is outside the human study.</p><a class="button outline" href="/sandbox">Try your own revision</a></section></main>'):assets[file];
    return new Response(content,{headers:{...headers,'Content-Type':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'}});
+  }
+  if(path==='/api/canonical'&&request.method==='GET'){
+   if(!env.PP_SIMULATION_RUN||!env.FLAGSMITH_SIMULATION_ENVIRONMENT_KEY||!env.DB)return json({error:'The published correction is being prepared.'},503);
+   const simRun=JSON.parse(env.PP_SIMULATION_RUN);
+   const row=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(simRun.run).first();
+   const snapshot=row?{...JSON.parse(row.payload),receipt_received_at:new Date(row.received_at).toISOString(),receipt_sha256:row.sha256}:null;
+   if(snapshot?.experiment?.id!==simRun.experiment_id||snapshot?.experiment?.status!=='completed')return json({error:'The release decision has not been completed.'},409);
+   const flag=await providerFactory(env.FLAGSMITH_SIMULATION_ENVIRONMENT_KEY).evaluate('proofpivot:published-canonical-page');
+   if(!canonicalRead(snapshot,simRun,flag))return json({error:'The current flag does not match the recorded release decision.'},409);
+   return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:simRun.experiment_id,mode:'canonical',environment:'Simulation',classification:'SIMULATED HACKATHON TRAFFIC',published:true,flag_name:'proofpivot_correction_experience',rollout_decision:snapshot.experiment.rollout_decision,rollout_variant:snapshot.experiment.rollout_variant,completed_at:snapshot.experiment.ended_at??null,fresh_same_flag_evaluation:true,human_comprehension_claim:false});
   }
   const scopeMatch=path.match(/^(\/read(?:\/(?:left|right))?)(?:\/(api\/.*))?\/?$/);
   if(path==='/api/judge-state'&&request.method==='GET')return json({state:'TECHNICAL_PROOF',environment:'Development',mode:'ab',experiment_id:developmentCompletion.id,provider:{experiment:developmentCompletion},ledger:{classification:'TECHNICAL_PROOF_ONLY_NO_STUDY_EVENTS'},limitations:['Archived real Development completion; current reader refreshes use real Development Flagsmith. No Production identity or event.']});

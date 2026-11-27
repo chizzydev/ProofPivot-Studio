@@ -19,8 +19,9 @@ export async function auxiliaryRoute(request,env,ctx,services,delegate,assets){
  const response=await delegate(new Request(mapped,request),child,ctx,services),headers=new Headers(response.headers);
  const cookies=headers.getSetCookie();headers.delete('Set-Cookie');for(const c of cookies)headers.append('Set-Cookie',c.replace('Path=/read','Path='+prefix+'/read'));
  if(headers.get('Content-Type')?.startsWith('text/html')){
-  const label=simulation?'SIMULATED HACKATHON TRAFFIC — NOT HUMAN EVIDENCE':'MANUAL PRODUCT QA — NOT STUDY EVIDENCE';
-  const html=(await response.text()).replace('src="/app.js"',`src="${prefix}/app.js"`).replace('<main class="reader-main">',`<main class="reader-main"><p class="eyebrow" role="note">${label}</p>`).replace('This Development run is for calibration. It does not establish a human comprehension result.',label+'. The ten-minute window uses the normal application backend.');
+  const label=simulation?'SIMULATED HACKATHON TRAFFIC — NOT HUMAN EVIDENCE':'MANUAL PRODUCT QA — NOT STUDY EVIDENCE',technicalReplay=simulation&&/^\/simulation\/read\/(?:left|right)/.test(path);
+  let html=(await response.text()).replace('src="/app.js"',`src="${prefix}/app.js"`);
+  if(!technicalReplay)html=html.replace('<main class="reader-main">',`<main class="reader-main"><p class="eyebrow" role="note">${label}</p>`).replace('This Development run is for calibration. It does not establish a human comprehension result.',label+'. The ten-minute window uses the normal application backend.');
   return new Response(html,{status:response.status,headers});
  }
  if(headers.get('Content-Type')?.startsWith('application/json')){const body=await response.json();return new Response(JSON.stringify({...body,classification:run.classification,...(mapped.pathname==='/api/state'?{simulation_model:simulation?simulationFreeze.model:null,production_human_study:'907 remains CLOSED and UNSTARTED',manual_qa_path:'/qa/read'}:{})}),{status:response.status,headers});}
