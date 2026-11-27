@@ -1,0 +1,47 @@
+{
+  "run": {
+    "run": "hackathon-simulation-v1",
+    "role": "hackathon_simulation",
+    "environment": "Simulation",
+    "environment_name": "Hackathon Simulation",
+    "environment_id": 121298,
+    "project_id": 53981,
+    "feature_id": 304953,
+    "variant_id": 36968,
+    "experiment_id": 912,
+    "warehouse_id": 13282,
+    "mode": "ab",
+    "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
+    "protocol_hash": "d87a8ee9f5e1d8f8bc92de87b8dfab85c35eed8a2a0f43aac72749da5ca87a84",
+    "model_hash": "6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027",
+    "classification": "SIMULATED HACKATHON TRAFFIC",
+    "expected_sessions": 800,
+    "status": "FROZEN_BEFORE_FIRST_EVENT"
+  },
+  "model": {
+    "frozen_at": "2026-11-27T03:17:12.054Z",
+    "model": {
+      "version": "hackathon-simulation-v1",
+      "classification": "SIMULATED HACKATHON TRAFFIC",
+      "seed": 20261127,
+      "attempted_sessions": 800,
+      "correctness_probability": {
+        "control": 0.55,
+        "evidence_time_machine": 0.75
+      },
+      "completion_probability": {
+        "control": 0.98,
+        "evidence_time_machine": 0.98
+      },
+      "draw_algorithm": "SHA256(seed:index:purpose), first uint32 big-endian / 2^32; independent completion, correctness and wrong-option draws. Fixed before assignment.",
+      "identity_algorithm": "Run-bound server HMAC UUID derived from frozen model hash and session index; signed HttpOnly cookie remains stable across requests.",
+      "exposure_rule": "Assigned explanation rendered; first factual sentence at least 50% visible in a visible document for 2000 cumulative milliseconds. Same rule in both arms.",
+      "response_window_ms": 600000,
+      "wrong_answer": "Uniform among the three non-key options; backend computes correctness from the submitted option.",
+      "reason": "Deliberate illustrative 20 percentage point correctness contrast with equal high completion, useful for demonstrating recovery of a specified mechanism signal and a non-degrading guardrail. These probabilities are assumptions, not observed human behavior.",
+      "stopping_rule": "Exactly 800 distinct indexed sessions. Resume failed infrastructure attempts at the same index/identity; never change probabilities/seed or replace a session to obtain a preferred result. Seal all new answers after the cohort completes.",
+      "analysis_rule": "Inspect only after fixed cohort and transport reconciliation. Crossing-zero interval is INCONCLUSIVE, integrity failure DO_NOT_ACT. No claim of improved human comprehension."
+    },
+    "model_hash": "6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027"
+  }
+}

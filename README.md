@@ -6,6 +6,24 @@
 
 [Try your own revision](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/sandbox) · [Input schema](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/sandbox-schema)
 
+## Current competition strategy: simulated participant, real mechanism
+
+[Official Track 1 rules and FAQ](https://www.wemakedevs.org/hackathons/flagsmith) permit scripted visits/events. Genuine-human recruitment is no longer a competition blocker. Production **907 / prod-ons-study-v2-r17 remains CLOSED, UNSTARTED and uncontaminated** as a human-ready infrastructure proof. Manual QA and simulated events never count as human comprehension evidence.
+
+The dedicated **Hackathon Simulation** environment **121298**, experiment **912**, warehouse **13282**, uses the SAME feature **304953** `proofpivot_correction_experience`, control key `control` / value `correction_note`, treatment option **36968** `evidence_time_machine`, primary `proofpivot_revision_check_correct` (metric 960), and guardrail `proofpivot_revision_check_submitted` (metric 961).
+
+The behavior model was frozen before traffic: **800 indexed sessions**, seed **20261127**, correctness probability **0.55 control / 0.75 treatment**, completion probability **0.98 in both arms**. Correctness is an illustrative probability conditional on completion, independent of the completion draw. Seeded SHA256 draws determine completion, intended answer and wrong-option choice. No assumption is based on observed human behavior, and no probability/seed change or favorable-result rerun is allowed. Model SHA256: `6918ccc3b958e0dc3b36ee27130f83cc5203ede3c040afc11f4e6d9f50ac5027`.
+
+`proofpivot/simulation-freeze.json` records the exact model/run. `scripts/simulate-hackathon.mjs` drives isolated Chromium sessions through the actual rendered product: stable signed cookie, real remote Flagsmith assignment, visible two-second exposure, normal first-answer endpoint, backend score and real SDK events. It never injects dashboard totals. Retries retain the same indexed identity. Non-completers are deliberately preserved in the exposed denominator. The normal handler and SQL are shared; only environment credentials, routes and labels differ. Production reader assets and protocol remain byte-identical to the accepted freeze.
+
+[Live Judge Door](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/judge) displays **SIMULATED HACKATHON TRAFFIC**, actual provider/as-of results, reconciliation and frozen assumptions. Replays use actual recorded identities and fresh same-flag evaluations; they cannot add experiment answers/events after sealing. Until the result and real provider completion exist, the UI must not claim Fork Collapse or a winner. A result under this declared model cannot establish that humans understand corrections better.
+
+[Manual product QA](https://proofpivot-correction-fork.ochresnow128.chatgpt.site/qa/read) uses Development experiment **913**, including the real ten-minute deadline and immutable first-answer path. It is outside both experiments 907 and 912 and is never competition-study evidence. `/practice` remains stateless and `/sandbox` remains repeatable and browser-local.
+
+The actual historical Development A/A **519** is preserved: 69/64 exposed identities and 33 correct responses in each key, approximately 66% treatment win probability, with a 95% relative-lift interval of **-29.36% to +44.99%**. The interval spans zero, so no winner was manufactured from noise.
+
+CI covers 54 domain checks and seven Chromium E2E scenarios, including auxiliary-route isolation, stable simulation identity, honest seeded behavior, manual QA deadline, original reader recovery, and repeatable sandbox. No live credentials or events are used in CI. Run `npm ci`, `npm test`, `npx playwright install chromium`, `npx playwright test` and `npm run build` with Node 24+.
+
 ## Production incident remediation — R17
 
 Experiment 578 is invalid for inference after one project-aware manual QA exposure. All local/provider records are preserved; there is no local exclusion. Its administrative provider completion disabled the flag so a fresh experiment could be created; this declares no winning variant.
@@ -36,7 +54,7 @@ Deployable Sites server with a D1-backed first-answer ledger and durable outbox.
 
 Node 24+. Use the Sites dependency and build helpers. D1 migrations: `drizzle/`. Runtime secrets: `FLAGSMITH_ENVIRONMENT_KEY`, `PP_SESSION_SECRET`, `PP_OPERATOR_SECRET`, `FLAGSMITH_JUDGE_ENVIRONMENT_KEY` (Development only). Configuration: `PP_ENVIRONMENT`, `PP_RUN`, `PP_ENROLLMENT`. Never commit secret values.
 
-Current deployment is locked Production preflight, with enrollment CLOSED and no genuine participants. Production enrollment requires Development receipts, isolated canary, immutable freeze and explicit human editor approval. Authenticated `/operator/evidence` stores actual provider snapshots with original as-of timestamps; `/operator/drain` retries pending events. Public routes cannot complete experiments. Human-approved completion-time rollout occurs in Flagsmith through the same feature.
+The Production human-study surface remains locked preflight, with enrollment CLOSED and no genuine participants; competition traffic uses the separate labelled simulation surface. Production enrollment requires Development receipts, isolated canary, immutable freeze and explicit human editor approval. Authenticated `/operator/evidence` stores actual provider snapshots with original as-of timestamps; `/operator/drain` retries pending events. Public routes cannot complete experiments. Human-approved completion-time rollout occurs in Flagsmith through the same feature.
 
 Feature: `proofpivot_correction_experience`. Values: `correction_note`, `evidence_time_machine`. Primary: `proofpivot_revision_check_correct` (Occurrence). Guardrail: `proofpivot_revision_check_submitted`. HTTP acceptance does not establish warehouse ingestion.
 

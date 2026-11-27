@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-27T03:00:00.296Z",
+  "at": "2026-11-27T07:20:02.815Z",
   "source": "Canonical ../app/lib and ../app/public",
   "hashes": {
     "engine.mjs": "dad2508d530eeda58f8b8e14049b17b0137bd6b3afdbf5cd8fa4fff2f18d781c",
@@ -10,6 +10,8 @@
     "sandbox-route.mjs": "8c024ef531e3b03ac3cd2a68036c12ccd8692458909f81ff3dd42fb60480a7ef",
     "study-gate.mjs": "406b9d49be56614dd767208029ea37444555a10538117e8c9ead6aafcb8fb76b",
     "reader-session.mjs": "b72486429fc096adbc13a39eabd54a11e15a8882df2b933dedc671e3d5685bc5",
+    "simulation-identity.mjs": "0fc10533926d3f15e505ab65e6321ba4f8ea52da98e2194c45eeb64355d1ce07",
+    "simulation-model.mjs": "4495570b8461f259518ff24214fc7466c9975ab95ef75c8d1a3f8f2fd0630028",
     "internal-pilot.mjs": "6686697b245cb3b4b5ea04c93d46fc3a10cd180ebd7a729d6f71530cf5a24e8b",
     "protocol.mjs": "43c942725766b892e754c3d4ca3941d83c5082626921f57d44dfd37e1c5ba8a1",
     "contract.mjs": "b482b02d0c910eba3e3bb58148acd1bd33d488da72d5f25c2dc125cfeaf8720b",
