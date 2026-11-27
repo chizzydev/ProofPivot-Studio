@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-26T19:47:19.493Z",
+  "at": "2026-11-27T03:00:00.296Z",
   "source": "Canonical ../app/lib and ../app/public",
   "hashes": {
     "engine.mjs": "dad2508d530eeda58f8b8e14049b17b0137bd6b3afdbf5cd8fa4fff2f18d781c",
@@ -8,14 +8,15 @@
     "ons-fixture.mjs": "8194f8ea721b269c56e9bd1aec0bb218687ab2d39b2443d72c4b4b7e31771fb9",
     "sandbox.mjs": "b684d5896ecfa0aa9aa5b50ebe9860be7bc2893bbc4ac9ce74dc23ec9375b668",
     "sandbox-route.mjs": "8c024ef531e3b03ac3cd2a68036c12ccd8692458909f81ff3dd42fb60480a7ef",
-    "study-gate.mjs": "4e2815a83ef909d97599324779608b99fc436d929f69f29835c96fe2efa54a55",
-    "internal-pilot.mjs": "a4e79fb0b4f15868d25bc08006e37e901107ed7d846f0ddfa6d3a6c5b1d7a326",
-    "protocol.mjs": "a0f578b1f6ec7ed41a4830a7ce5b836b05bf3587816835da0b741524ba129951",
+    "study-gate.mjs": "406b9d49be56614dd767208029ea37444555a10538117e8c9ead6aafcb8fb76b",
+    "reader-session.mjs": "b72486429fc096adbc13a39eabd54a11e15a8882df2b933dedc671e3d5685bc5",
+    "internal-pilot.mjs": "6686697b245cb3b4b5ea04c93d46fc3a10cd180ebd7a729d6f71530cf5a24e8b",
+    "protocol.mjs": "43c942725766b892e754c3d4ca3941d83c5082626921f57d44dfd37e1c5ba8a1",
     "contract.mjs": "b482b02d0c910eba3e3bb58148acd1bd33d488da72d5f25c2dc125cfeaf8720b",
     "provider.mjs": "358f1d30ad2b22ecb7e902ef7ea5d7d07f465ae9519dcdaa56e5fd91e61a623b",
-    "async-ledger.mjs": "0e8ef227f6cbe590eeaacf8954cf4f5735b5c776c751e349afbcc6020d2ec219",
+    "async-ledger.mjs": "cff5c8a2126b9c05494ee9b6deccd32e2e853dc90ed5582b26aece28066e70f4",
     "readout.mjs": "49252719575baddc9cfee987638eb8f247ea3b9d461ae130d7d3240bd2047965",
-    "ledger.mjs": "b0b5d39f8244598c57811edd056d963e488f7651f2c51a6f185a928f709924ee"
+    "ledger.mjs": "f043ecc5c4dd9727b62c2f8655fdf39cb24783d6fa6a9fdacaea9209de65ce3b"
   },
   "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8"
 }

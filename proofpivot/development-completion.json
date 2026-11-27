@@ -1,0 +1,51 @@
+{
+  "id": 571,
+  "feature": {
+    "id": 304953,
+    "name": "proofpivot_correction_experience",
+    "type": "MULTIVARIATE",
+    "initial_value": "correction_note",
+    "multivariate_options": [
+      {
+        "id": 36968,
+        "uuid": "5a8d9772-9ab8-4d95-bb36-defda67f9f52",
+        "type": "unicode",
+        "integer_value": null,
+        "string_value": "evidence_time_machine",
+        "boolean_value": null,
+        "default_percentage_allocation": 0,
+        "key": "evidence_time_machine"
+      }
+    ]
+  },
+  "name": "ProofPivot Correction Fork - Development Candidate v2",
+  "hypothesis": "Preview the real explanation fork before a separately approved Production study.",
+  "status": "completed",
+  "metrics": [
+    {
+      "id": 628,
+      "metric": 504,
+      "metric_name": "ProofPivot Revision Check Correct",
+      "aggregation": "occurrence",
+      "direction": "up",
+      "expected_direction": "increase",
+      "created_at": "2026-11-26T08:20:23.872257Z"
+    },
+    {
+      "id": 629,
+      "metric": 505,
+      "metric_name": "ProofPivot Revision Check Submitted",
+      "aggregation": "occurrence",
+      "direction": "up",
+      "expected_direction": "not_decrease",
+      "created_at": "2026-11-26T08:20:23.872278Z"
+    }
+  ],
+  "experiment_rollout": null,
+  "created_at": "2026-11-26T08:20:23.867573Z",
+  "updated_at": "2026-11-26T13:13:49.259498Z",
+  "started_at": "2026-11-26T08:20:25.767577Z",
+  "ended_at": "2026-11-26T13:13:48.895001Z",
+  "rollout_decision": "control",
+  "rollout_variant": null
+}

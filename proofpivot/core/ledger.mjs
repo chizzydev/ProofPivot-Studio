@@ -1,3 +1,4 @@
+import{readerSession,responseError}from'./reader-session.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {randomUUID} from 'node:crypto';
 import {PROTOCOL,score,protocolHash} from './protocol.mjs';
@@ -29,18 +30,18 @@ export class Ledger {
  }
  render(id){const p=this.participant(id);if(!p?.variant||p.quarantined)throw Error('Valid assignment required');this.db.prepare('UPDATE participants SET rendered_at=COALESCE(rendered_at,?) WHERE run=? AND identity=?').run(this.clock(),this.run,id);}
  enqueue(p,event,value,at){this.db.prepare('INSERT OR IGNORE INTO outbox(id,run,identity,event,value,experiment_id,domain_at) VALUES(?,?,?,?,?,?,?)').run(randomUUID(),this.run,p.identity,event,value,p.experiment_id,at);}
+ session(id){return readerSession(this.participant(id),this.db.prepare('SELECT submitted_at FROM answers WHERE run=? AND identity=?').get(this.run,id),this.clock());}
  expose(id,{payloadHash,visible,dwellMs}={}){
   const p=this.participant(id),now=this.clock();
   if(!p?.rendered_at||p.quarantined||payloadHash!==this.payloadHash||visible!==true||dwellMs<PROTOCOL.exposure_dwell_ms||now-p.rendered_at<PROTOCOL.exposure_dwell_ms)throw Error('Meaningful display required');
-  return this.transaction(()=>{if(!p.exposed_at){this.db.prepare('UPDATE participants SET exposed_at=? WHERE run=? AND identity=?').run(now,this.run,id);this.enqueue(p,'$flag_exposure',p.variant,now);}return {exposed:true};});
+  return this.transaction(()=>{if(!p.exposed_at){this.db.prepare('UPDATE participants SET exposed_at=? WHERE run=? AND identity=?').run(now,this.run,id);this.enqueue(p,'$flag_exposure',p.variant,now);}return {exposed:true,session:this.session(id)};});
  }
  answer(id,option,payloadHash){
   if(payloadHash!==this.payloadHash)throw Error('Truth lock mismatch');
   return this.transaction(()=>{
    const old=this.db.prepare('SELECT option,correct,submitted_at FROM answers WHERE run=? AND identity=?').get(this.run,id);if(old)return {...old,correct:!!old.correct,immutable:true};
    const p=this.participant(id),now=this.clock();
-   if(!p?.exposed_at||p.quarantined)throw Error('Exposure required');
-   if(now-p.exposed_at>PROTOCOL.response_window_ms)throw Error('Response window expired');
+   const session=this.session(id);if(session.status!=='ACTIVE')throw responseError(session);
    const correct=score(option,this.payload);
    this.db.prepare('INSERT INTO answers VALUES(?,?,?,?,?)').run(this.run,id,option,+correct,now);
    this.enqueue(p,'proofpivot_revision_check_submitted',null,now);

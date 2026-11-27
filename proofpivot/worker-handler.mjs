@@ -1,13 +1,15 @@
+import{serveTechnicalReader}from'./technical-reader.mjs';
+import developmentCompletion from './development-completion.json' with {type:'json'};
 import {randomUUID,createHmac,timingSafeEqual}from'node:crypto';
-import assets from './assets.json';
-import facts from './facts.json';
+import assets from './assets.json' with {type:'json'};
+import facts from './facts.json' with {type:'json'};
 import {hash,experience}from'./core/payload.mjs';
 import {PROTOCOL,protocolHash,score}from'./core/protocol.mjs';
 import {AsyncLedger}from'./core/async-ledger.mjs';
 import {Provider,drain}from'./core/provider.mjs';
 import {readout,canonicalRead}from'./core/readout.mjs';
 import {serveSandbox}from'./core/sandbox-route.mjs';
-import frozen from '../study-freeze.json';
+import frozen from '../study-freeze.json' with {type:'json'};
 import {productionAuthorized,enrollmentOpen,frozenRuntimeManifest,closedReader}from'./core/study-gate.mjs';
 import {InternalPilot,INTERNAL_PILOT,studyDesignHash,canShowStudyPerformance}from'./core/internal-pilot.mjs';
 
@@ -20,17 +22,20 @@ async function pump(ledger,provider){
  const p=drain(ledger,provider,{max:12}).finally(()=>running.delete(key));running.set(key,p);return p;
 }
 function authorized(request,secret){const input=request.headers.get('Authorization')||'';const expected='Bearer '+secret;if(!secret||input.length!==expected.length)return false;return timingSafeEqual(Buffer.from(input),Buffer.from(expected));}
-export async function handleRequest(request,env,ctx){
+export async function handleRequest(request,env,ctx,{clock=()=>Date.now(),providerFactory=key=>new Provider(key)}={}){
  try{
   const url=new URL(request.url),path=url.pathname;
   const sandbox=serveSandbox(request,assets);if(sandbox)return sandbox;
   if(path==='/health')return json({ok:true,configured:!!env.PP_RUN,environment:env.PP_ENVIRONMENT||'UNCONFIGURED'});
+  if(path==='/practice'&&request.method==='GET')return new Response(assets['practice.html'],{headers:{...headers,'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"}});
   const file=paths[path];if(file&&request.method==='GET'){
    // Site navigation outside the frozen study reader; canonical study files stay byte-identical.
    const content=path==='/judge'?assets[file].replace('</main>','<section class="sandbox-invite"><h2>Don\'t trust our prepared example.</h2><p>Enter a fresh supported revision and inspect its claim states through the same engine. Sandbox activity is outside the human study.</p><a class="button outline" href="/sandbox">Try your own revision</a></section></main>'):assets[file];
    return new Response(content,{headers:{...headers,'Content-Type':file.endsWith('.css')?'text/css; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':'text/html; charset=utf-8'}});
   }
   const scopeMatch=path.match(/^(\/read(?:\/(?:left|right))?)(?:\/(api\/.*))?\/?$/);
+  if(path==='/api/judge-state'&&request.method==='GET')return json({state:'TECHNICAL_PROOF',environment:'Development',mode:'ab',experiment_id:developmentCompletion.id,provider:{experiment:developmentCompletion},ledger:{classification:'TECHNICAL_PROOF_ONLY_NO_STUDY_EVENTS'},limitations:['Archived real Development completion; current reader refreshes use real Development Flagsmith. No Production identity or event.']});
+  if(scopeMatch?.[1]!=='/read'&&scopeMatch){const proof=await serveTechnicalReader(request,{assets,facts,key:env.FLAGSMITH_JUDGE_ENVIRONMENT_KEY,secret:env.PP_SESSION_SECRET,completion:developmentCompletion,providerFactory});if(proof)return proof;}
   const earlyRun=env.PP_RUN?JSON.parse(env.PP_RUN):null;
   const lockedProduction=env.PP_ENVIRONMENT==='Production'&&!productionAuthorized(earlyRun,frozen);
   if(scopeMatch&&!scopeMatch[2]&&request.method==='GET'){
@@ -40,7 +45,7 @@ export async function handleRequest(request,env,ctx){
    }
    // Cookie is scoped to this independent reader, with no script access.
    if(!env.PP_SESSION_SECRET)return json({error:'Experiment is being prepared. Please return later.'},503);
-   const sign=id=>createHmac('sha256',env.PP_SESSION_SECRET).update(id).digest('hex');
+   const sign=id=>createHmac('sha256',env.PP_SESSION_SECRET).update(earlyRun.run+':'+id).digest('hex');
    const cookie=(request.headers.get('Cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('pp_session='))?.slice(11);
    let valid=false;if(cookie){const[id,sig]=cookie.split('.');valid=/^pp:[0-9a-f-]{36}$/.test(id)&&/^[0-9a-f]{64}$/.test(sig||'')&&timingSafeEqual(Buffer.from(sig,'hex'),Buffer.from(sign(id),'hex'));}
    const id='pp:'+randomUUID();return new Response(assets['reader.html'],{headers:{...headers,'Content-Type':'text/html; charset=utf-8',...(!valid?{'Set-Cookie':`pp_session=${id}.${sign(id)}; Path=${scopeMatch[1]}; HttpOnly; SameSite=Strict; Secure; Max-Age=604800`}:{})}});
@@ -50,8 +55,8 @@ export async function handleRequest(request,env,ctx){
   if(!['Development','Production'].includes(environment)||run.environment!==environment||run.payload_hash!==hash(facts)||run.protocol_hash!==protocolHash)throw Error('Frozen contract mismatch');
   if(path==='/api/facts'&&request.method==='GET')return json({facts,correction_payload_hash:hash(facts)});
   if(path==='/api/preflight'&&request.method==='GET'&&environment==='Production'){
-    const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
-    const phase=await new InternalPilot(env.DB,run.run).phase();
+    const provider=providerFactory(env.FLAGSMITH_ENVIRONMENT_KEY);
+    const phase=await new InternalPilot(env.DB,run.run,{warehouseBaseline:run.warehouse_baseline}).phase();
     const admissionOpen=env.PP_ENROLLMENT==='open'&&phase==='INTERNAL_PILOT_COLLECTING';
     const manifest=await frozenRuntimeManifest({run,environment,enrollment:admissionOpen?'open':'closed',facts,protocolHash,assets,frozen,hash,provider});
     // Read only. No initialize(), study identity evaluation, outbox sender or run insert.
@@ -60,14 +65,14 @@ export async function handleRequest(request,env,ctx){
   }
   if(lockedProduction){
    if(path==='/api/state'&&request.method==='GET'){
-    const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});
-    return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,study_design:INTERNAL_PILOT,study_design_hash:studyDesignHash,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:await ledger.summary(),provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
+    const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts,clock});
+    return json({state:'PREFLIGHT_CLOSED',environment,mode:run.mode,study_role:run.role,study_design:INTERNAL_PILOT,study_design_hash:studyDesignHash,run:run.run,experiment_id:run.experiment_id,enrollment:'CLOSED',human_editor_approved:false,ledger:{operational:await new InternalPilot(env.DB,run.run,{warehouseBaseline:run.warehouse_baseline}).operational()},provider:null,limitations:['Preflight only. Human enrollment is closed. The experiment has not been started.']});
    }
    if(scopeMatch?.[2]&&request.method==='POST')return json({error:'Production enrollment is CLOSED. Explicit editor approval and enrollment opening are required.'},409);
    return json({error:'Production study is gated; preflight only.'},403);
   }
-  const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts});await ledger.initialize();const provider=new Provider(env.FLAGSMITH_ENVIRONMENT_KEY);
-  const pilot=environment==='Production'?new InternalPilot(env.DB,run.run):null;
+  const ledger=new AsyncLedger(env.DB,{run:run.run,environment,payload:facts,clock});await ledger.initialize();const provider=providerFactory(env.FLAGSMITH_ENVIRONMENT_KEY);
+  const pilot=environment==='Production'?new InternalPilot(env.DB,run.run,{warehouseBaseline:run.warehouse_baseline}):null;
   const broaderApproved=canShowStudyPerformance(run,pilot?await pilot.phase():null,frozen);
   const readEvidence=async()=>{const r=await env.DB.prepare('SELECT payload,received_at,sha256 FROM operator_evidence WHERE run=? ORDER BY id DESC LIMIT 1').bind(run.run).first();return r?{...JSON.parse(r.payload),receipt_received_at:new Date(r.received_at).toISOString(),receipt_sha256:r.sha256}:null;};
   if(path==='/api/state'&&request.method==='GET'){
@@ -80,17 +85,17 @@ export async function handleRequest(request,env,ctx){
   if(path.startsWith('/operator/')&&request.method==='POST'){
    if(!authorized(request,env.PP_OPERATOR_SECRET))return json({error:'Operator authentication required'},403);
    if(path==='/operator/close-enrollment'){
-    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();
-    const windows=await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND p.exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,Date.now()-PROTOCOL.response_window_ms).first();
+    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,clock()).run();
+    const windows=await env.DB.prepare('SELECT COUNT(*) n FROM participants p WHERE p.run=? AND p.exposed_at>? AND NOT EXISTS(SELECT 1 FROM answers a WHERE a.run=p.run AND a.identity=p.identity)').bind(run.run,clock()-PROTOCOL.response_window_ms).first();
     return json({closed:true,open_response_windows:windows.n,ledger:pilot?await pilot.operational():await ledger.summary()});
    }
    if(path==='/operator/internal-pilot-review'&&pilot){
     // Close first, for either assessment outcome. PASS is not broader-recruitment approval.
-    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,Date.now()).run();
+    await env.DB.prepare('INSERT OR IGNORE INTO run_controls(run,enrollment_closed_at) VALUES(?,?)').bind(run.run,clock()).run();
     const input=await request.json(),review=await pilot.review(input);return json({...review,enrollment_closed:true,broader_recruitment_requires_editor_approval:true});
    }
    if(path==='/operator/cohort-audit'&&pilot){
-    const operational=await pilot.operational(),now=Date.now();
+    const operational=await pilot.operational(),now=clock();
     const answers=(await env.DB.prepare('SELECT a.option,a.correct,a.submitted_at,p.exposed_at FROM answers a JOIN participants p USING(run,identity) WHERE a.run=?').bind(run.run).all()).results;
     const scoring_mismatches=answers.filter(a=>score(a.option,facts)!==!!a.correct).length;
     const invalid_answer_windows=answers.filter(a=>!a.exposed_at||a.submitted_at<a.exposed_at||a.submitted_at-a.exposed_at>PROTOCOL.response_window_ms).length;
@@ -108,7 +113,7 @@ export async function handleRequest(request,env,ctx){
     const input=await request.json();
     if(pilot&&(await pilot.phase()!=='INTERNAL_PILOT_PASS'||!broaderApproved)&&input.results?.results)return json({error:'Arm-level results are withheld until broader-study approval'},409);
     if(input.run?.run!==run.run||input.run?.experiment_id!==run.experiment_id||input.experiment?.feature?.id!==run.feature_id||input.environment_id!==(environment==='Development'?116182:116183))return json({error:'Provider snapshot contract mismatch'},409);
-    await env.DB.prepare('INSERT INTO operator_evidence(run,received_at,payload,sha256) VALUES(?,?,?,?)').bind(run.run,Date.now(),JSON.stringify(input),hash(input)).run();return json({stored:true,sha256:hash(input)});
+    await env.DB.prepare('INSERT INTO operator_evidence(run,received_at,payload,sha256) VALUES(?,?,?,?)').bind(run.run,clock(),JSON.stringify(input),hash(input)).run();return json({stored:true,sha256:hash(input)});
    }
   }
   if(scopeMatch?.[2]&&request.method==='POST'){
@@ -116,11 +121,12 @@ export async function handleRequest(request,env,ctx){
    const length=Number(request.headers.get('Content-Length')||0);if(length>4096)return json({error:'Request too large'},413);
    const text=await request.text();if(text.length>4096)return json({error:'Request too large'},413);const input=JSON.parse(text||'{}');
    const raw=(request.headers.get('Cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('pp_session='))?.slice(11)||'';
-   const[id,sig]=raw.split('.');const expected=createHmac('sha256',env.PP_SESSION_SECRET).update(id||'').digest('hex');
+   const[id,sig]=raw.split('.');const expected=createHmac('sha256',env.PP_SESSION_SECRET).update(run.run+':'+(id||'')).digest('hex');
    if(!/^pp:[0-9a-f-]{36}$/.test(id||'')||!/^[0-9a-f]{64}$/.test(sig||'')||!timingSafeEqual(Buffer.from(sig,'hex'),Buffer.from(expected,'hex')))return json({error:'Open the reader page to start a session'},403);
-   const limit=await env.DB.prepare('INSERT INTO request_limits(bucket,count) VALUES(?,1) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(`${run.run}:${id}:${Math.floor(Date.now()/60000)}`).first();
+   const limit=await env.DB.prepare('INSERT INTO request_limits(bucket,count) VALUES(?,1) ON CONFLICT(bucket) DO UPDATE SET count=count+1 RETURNING count').bind(`${run.run}:${id}:${Math.floor(clock()/60000)}`).first();
    if(limit.count>40)return json({error:'Please wait a moment before retrying'},429);
    const action=scopeMatch[2];
+   if(action==='api/session')return json(await ledger.session(id));
    if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed; all records are preserved.'},409);
    if(action==='api/consent'){
     if(input.consent!==true)return json({error:'Voluntary consent required'},400);
@@ -133,16 +139,17 @@ export async function handleRequest(request,env,ctx){
     }
     if(environment==='Production'&&snapshot?.experiment?.status!=='completed'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
     if(pilot&&snapshot?.experiment?.status!=='completed')await pilot.reserve(id);
-    const flag=await provider.evaluate(id);
+    const prior=await ledger.participant(id);
+    const flag=prior?.variant?{enabled:true,value:prior.value,variant:prior.variant,experiment:{id:prior.experiment_id,inExperiment:true}}:await provider.evaluate(id);
     if(pilot&&await pilot.phase()==='INVALIDATED')return json({error:'Entire run invalidated. Enrollment is closed.'},409);
     if(canonicalRead(snapshot,run,flag))return json({...experience(facts,flag.value,'ab'),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment_id:run.experiment_id,mode:'canonical',environment,study_complete:true});
     if(environment==='Production'&&(input.adultEnglish!==true||input.firstTime!==true))return json({error:'This study requires adult English-reading participants who have not seen this exact task before.'},400);
     const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
     if(env.PP_ENROLLMENT!=='open'||control)return json({error:'Enrollment is closed. Existing answers are preserved.'},409);
     if(flag.experiment?.id!==run.experiment_id)throw Error('Provider experiment drift');
-    await env.DB.prepare('INSERT OR IGNORE INTO consents(run,identity,protocol_hash,adult_english,first_time,at) VALUES(?,?,?,?,?,?)').bind(run.run,id,protocolHash,+!!input.adultEnglish,+!!input.firstTime,Date.now()).run();
+    await env.DB.prepare('INSERT OR IGNORE INTO consents(run,identity,protocol_hash,adult_english,first_time,at) VALUES(?,?,?,?,?,?)').bind(run.run,id,protocolHash,+!!input.adultEnglish,+!!input.firstTime,clock()).run();
     await ledger.consent(id);const p=await ledger.assign(id,flag);await ledger.render(id);
-    return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options.map(o=>o.label),exposure_dwell_ms:PROTOCOL.exposure_dwell_ms}});
+    return json({...experience(facts,p.value,run.mode),assigned_by:'Flagsmith',provider_variant:p.variant,experiment_id:p.experiment_id,mode:run.mode,environment,session:await ledger.session(id),protocol:{question:PROTOCOL.question,order:PROTOCOL.order,options:PROTOCOL.options.map(o=>o.label),exposure_dwell_ms:PROTOCOL.exposure_dwell_ms,response_window_ms:PROTOCOL.response_window_ms}});
    }
    if(action==='api/exposure'){
     const control=await env.DB.prepare('SELECT enrollment_closed_at FROM run_controls WHERE run=?').bind(run.run).first();
@@ -151,10 +158,11 @@ export async function handleRequest(request,env,ctx){
    }
    if(action==='api/answer'){const result=await ledger.answer(id,input.option,input.payloadHash);if(pilot)await pilot.closeIfCheckpointComplete();ctx.waitUntil(pump(ledger,provider));return json(result);}
    if(action==='api/reevaluate'){
+    if(scopeMatch[1]==='/read')return json({error:'This control is available in the technical proof readers only.'},403);
     if(!(await ledger.participant(id))?.variant)throw Error('Prior assignment required');
     const flag=await provider.evaluate(id);if(!flag.enabled||!['correction_note','evidence_time_machine'].includes(flag.value))throw Error('Provider unavailable');return json({...experience(facts,flag.value,run.mode),assigned_by:'Flagsmith',provider_variant:flag.variant,experiment:flag.experiment??null});
    }
   }
   return json({error:'Not found'},404);
- }catch(e){const safe=['Meaningful display required','Complete answer required','Truth lock mismatch','Exposure or valid response window required'];return json({error:safe.includes(e.message)?e.message:'Experiment unavailable. Existing responses are preserved.'},safe.includes(e.message)?409:503);}
+ }catch(e){if(['SESSION_EXPIRED','READ_REQUIRED'].includes(e.code))return json({error:e.message,code:e.code,session:e.session},409);const messages={'Meaningful display required':'Please keep the correction in view for a moment before answering. Your answer has not been recorded.','Complete answer required':'Choose one answer before submitting.','Truth lock mismatch':'This reading task is unavailable. Your answer was not recorded. Please return later.'};return json({error:messages[e.message]||'We could not complete this request. Existing responses are preserved. Please try again later.'},messages[e.message]?409:503);}
 }

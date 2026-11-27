@@ -1,16 +1,27 @@
 {
-  "candidate_hash": "535157bb94091697cd44dca38cf8bddf0b1d9d40ce50c86b249c3622afffb354",
+  "candidate_hash": "0de6b0c24a102689c83aae3739387bfeb77c0694725b25e59c46415318939fe8",
   "payload_hash": "bb2f5722fed0b2e373f25c35d8e2fdb02cd4de5f1930ccf0b5dea242e051dec8",
-  "protocol_hash": "e1861df7440826a128b4f01cb4e40cf157b8e79a32bb705a7f016b67c795328d",
+  "protocol_hash": "d87a8ee9f5e1d8f8bc92de87b8dfab85c35eed8a2a0f43aac72749da5ca87a84",
   "content_hashes": {
-    "app.js": "ad401be1f62d571ebc505dbad9e9560216ea37057b6d4d657ee68258eea031d0",
+    "app.js": "ac577791cad518b5db8138b628dc83e65081899ea8dbb8092209255671d10c10",
     "index.html": "3c010bc66fa0b227c0ad19920e18735f5c6d17c36702015d4be66da91902c8a6",
-    "judge.html": "e2f273aff4a5160942ac3cc49a23ce1d4c7a4668e12de2ff825c801a522d2b76",
-    "judge.js": "bb2c4cebfc6a86cd1c969bdd7617ef7eabdf007ea51cbf6cffbaea3fa45c4e08",
-    "reader.html": "1bbaea94e10945665f83a8baaa3efc7adf3557d2238df3728ef8d3f2437e47e6",
-    "style.css": "9c9173f8b288add4f87923455a4ed4c89f475aea07d58fffeb6c40be6dc286dc"
+    "judge.html": "ce9150f5c4493b2752fce466253b256af2158114baea98d2d80fc0e48e6f2f5a",
+    "judge.js": "3a6efe250235801222637075644b6dc670ade3aecc249fb520bc7f97984007ca",
+    "reader.html": "443ed45bb4bfc104b00c6a9eccfbef601b6b6fde585ba8ef345e1f8d2310f614",
+    "style.css": "9c9173f8b288add4f87923455a4ed4c89f475aea07d58fffeb6c40be6dc286dc",
+    "practice.html": "f2d9b9a0f0f1d15e9b6c6b5e62558e031e3df517c6ebb26d91d8acb7ade4550c"
   },
-  "study_design_hash": "dc7910ed8f0a5387cd99f8d0a6e706e45f51b3ca8912c21e2c6976caca4c474f",
-  "run": "prod-ons-study-v1",
-  "experiment_id": 578
+  "study_design_hash": "af7fe08269e6140fbe80ef11de44c701a2cbcf41d0e8543429991247f2819469",
+  "run": "prod-ons-study-v2-r17",
+  "experiment_id": 907,
+  "feature_id": 304953,
+  "variant_id": 36968,
+  "warehouse_baseline": {
+    "environment_id": 116183,
+    "warehouse_id": 8219,
+    "total_events_received": 2,
+    "unique_events_count": 2,
+    "observed_at": "2026-11-27T02:46:15.497Z",
+    "classification": "Historical preserved canary and invalidated-run QA exposure; transport baseline only; never a subtraction from experiment results."
+  }
 }
