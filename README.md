@@ -97,9 +97,9 @@ The participant question tests an editorial action across three claims. Only opt
 
 Opening requires all of: an exact candidate-matched editor approval, matching Production IDs, frozen protocol status, explicit removal of preflight-only mode, verified infrastructure and explicit enrollment opening. An open setting alone cannot enroll. Default flags and identity targeting are distinct: actual preflight readback showed the environment default disabled, while the created experiment's rollout segment already targeted transient identities with a variation but no experiment membership. This is recorded and must never be interpreted as an enrolled participant or exposure.
 
-## Governing internal-pilot protocol
+## Archived human internal-pilot protocol — recruitment superseded
 
-The first 10–20 eligible genuine humans are the beginning of the actual frozen Production study, experiment **578**, run `prod-ons-study-v1`. They are never a separate disposable cohort. All real exposures/conversions remain in the provider warehouse and all first answers remain in the ledger. There is no pilot-based result subtraction or local exclusion filter.
+Experiment 578 / `prod-ons-study-v1` is invalid for inference. Fresh experiment 907 / `prod-ons-study-v2-r17` remains closed and unstarted; the simulation mandate supersedes recruitment. The prospective checkpoint is exactly five eligible genuine humans, retained in any valid future run. They are never a disposable cohort. All real exposures/conversions remain in the provider warehouse and all first answers remain in the ledger. There is no pilot-based result subtraction or local exclusion filter.
 
 An atomic admission hold prevents a sixth initial admission. Saving the fifth complete first answer automatically closes enrollment. Review after all five valid completions covers only consent, task clarity, ambiguity/UI, stable identity, meaningful exposure, first-answer immutability, delivery/reconciliation, contamination and integrity. The initial study view and operator tools withhold arm-level performance and do not fetch provider results. Do not inspect early treatment-versus-control performance or tune the contract.
 
